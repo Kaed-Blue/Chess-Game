@@ -1,4 +1,5 @@
 import pygame
+import os
 
 pygame.init()
 
@@ -60,46 +61,67 @@ def init_board():
                             )
 
             board[row].append(cell_dict)
-    print(board)
+    # print(board)
 
 
 init_board()
 
-# load assets
-black_bishop = pygame.image.load("assets/black_bishop.png")
-white_bishop = pygame.image.load("assets/white_bishop.png")
-black_king = pygame.image.load("assets/black_king.png")
-white_king = pygame.image.load("assets/white_king.png")
-black_pawn = pygame.image.load("assets/black_pawn.png")
-white_pawn = pygame.image.load("assets/white_pawn.png")
-black_queen = pygame.image.load("assets/black_queen.png")
-white_queen = pygame.image.load("assets/white_queen.png")
-black_knight = pygame.image.load("assets/black_knight.png")
-white_knight = pygame.image.load("assets/white_knight.png")
-black_rook = pygame.image.load("assets/black_rook.png")
-white_rook = pygame.image.load("assets/white_rook.png")
 
-black_bishop = black_bishop.convert_alpha()
-white_bishop = white_bishop.convert_alpha()
-black_king = black_king.convert_alpha()
-white_king = white_king.convert_alpha()
-black_pawn = black_pawn.convert_alpha()
-white_pawn = white_pawn.convert_alpha()
-black_queen = black_queen.convert_alpha()
-white_queen = white_queen.convert_alpha()
-black_knight = black_knight.convert_alpha()
-white_knight = white_knight.convert_alpha()
-black_rook = black_rook.convert_alpha()
-white_rook = white_rook.convert_alpha()
+def load_assets(size):
+    image_paths = {
+        "black_bishop": "assets/black_bishop.png",
+        "white_bishop": "assets/white_bishop.png",
+        "black_king": "assets/black_king.png",
+        "white_king": "assets/white_king.png",
+        "black_pawn": "assets/black_pawn.png",
+        "white_pawn": "assets/white_pawn.png",
+        "black_queen": "assets/black_queen.png",
+        "white_queen": "assets/white_queen.png",
+        "black_knight": "assets/black_knight.png",
+        "white_knight": "assets/white_knight.png",
+        "black_rook": "assets/black_rook.png",
+        "white_rook": "assets/white_rook.png",
+    }
+    processed_images = {}
+    for name, path in image_paths.items():
+        try:
+            img = pygame.image.load(path)
+            img = pygame.transform.scale(img, size)
+            processed_images[name] = img
+        except pygame.error as error:
+            print(f"failed to load {name} from {path}: {error}")
+    return processed_images
+
+
+images = load_assets((100, 100))
+
+black_bishop = images["black_bishop"]
+white_bishop = images["white_bishop"]
+black_king = images["black_king"]
+white_king = images["white_king"]
+black_pawn = images["black_pawn"]
+white_pawn = images["white_pawn"]
+black_knight = images["black_knight"]
+white_knight = images["white_knight"]
+black_queen = images["black_queen"]
+white_queen = images["white_queen"]
+black_rook = images["black_rook"]
+white_rook = images["white_rook"]
 
 
 def draw_board():
-    screen.fill((0, 0, 0))
+    screen.fill((59, 49, 16))
 
     for row in range(int(rows)):
         for col in range(int(cols)):
-            if board[row][col]["occupied"] == True:
-                pass
+            Rect = pygame.Rect(col * cell_size, row * cell_size, cell_size, cell_size)
+            pygame.draw.rect(screen, (0, 0, 0), Rect, 2)
+            # if board[row][col]["occupied"] == True:
+            #     pass
+    pygame.display.update()
+
+
+draw_board()
 
 
 def get_acceptable_moves():
@@ -112,16 +134,13 @@ def move_pieces():
 
 running = True
 while running:
-    screen.fill((100, 100, 100))
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
     screen.blit(black_bishop, (0, 0))
-    screen.blit(white_bishop, (0, 100))
-    screen.blit(black_rook, (0, 200))
-    screen.blit(white_king, (0, 300))
-    screen.blit(black_king, (0, 400))
+    screen.blit(white_king, (100, 100))
 
     pygame.display.flip()
 
