@@ -11,7 +11,7 @@ cols = windows_height // cell_size
 
 screen = pygame.display.set_mode((windows_width, windows_height))
 
-
+# fmt: off
 pieces_dict = {
     "rook": [(0, 0), (7, 7), (7, 0), (0, 7)],
     "knight": [(0, 1), (0, 6), (7, 1), (7, 6)],
@@ -24,11 +24,13 @@ pieces_dict = {
              (6, 4), (6, 5), (6, 6), (6, 7),
              ],
     }
-    # fmt: on
+# fmt: on
 
 board = []
+
+
 def init_board():
-    # fmt: off
+
     for row in range(int(rows)):  # col = x, row = y
         board.append([])
         for col in range(int(cols)):
@@ -63,6 +65,33 @@ def init_board():
 
 init_board()
 
+# load assets
+black_bishop = pygame.image.load("assets/black_bishop.png")
+white_bishop = pygame.image.load("assets/white_bishop.png")
+black_king = pygame.image.load("assets/black_king.png")
+white_king = pygame.image.load("assets/white_king.png")
+black_pawn = pygame.image.load("assets/black_pawn.png")
+white_pawn = pygame.image.load("assets/white_pawn.png")
+black_queen = pygame.image.load("assets/black_queen.png")
+white_queen = pygame.image.load("assets/white_queen.png")
+black_knight = pygame.image.load("assets/black_knight.png")
+white_knight = pygame.image.load("assets/white_knight.png")
+black_rook = pygame.image.load("assets/black_rook.png")
+white_rook = pygame.image.load("assets/white_rook.png")
+
+black_bishop = black_bishop.convert_alpha()
+white_bishop = white_bishop.convert_alpha()
+black_king = black_king.convert_alpha()
+white_king = white_king.convert_alpha()
+black_pawn = black_pawn.convert_alpha()
+white_pawn = white_pawn.convert_alpha()
+black_queen = black_queen.convert_alpha()
+white_queen = white_queen.convert_alpha()
+black_knight = black_knight.convert_alpha()
+white_knight = white_knight.convert_alpha()
+black_rook = black_rook.convert_alpha()
+white_rook = white_rook.convert_alpha()
+
 
 def draw_board():
     screen.fill((0, 0, 0))
@@ -70,7 +99,8 @@ def draw_board():
     for row in range(int(rows)):
         for col in range(int(cols)):
             if board[row][col]["occupied"] == True:
-                
+                pass
+
 
 def get_acceptable_moves():
     pass
@@ -82,9 +112,17 @@ def move_pieces():
 
 running = True
 while running:
-
+    screen.fill((100, 100, 100))
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+
+    screen.blit(black_bishop, (0, 0))
+    screen.blit(white_bishop, (0, 100))
+    screen.blit(black_rook, (0, 200))
+    screen.blit(white_king, (0, 300))
+    screen.blit(black_king, (0, 400))
+
+    pygame.display.flip()
 
 pygame.quit()
