@@ -3,8 +3,8 @@ import os
 
 pygame.init()
 
-windows_width = 800
-windows_height = 800
+windows_width = 800  # default = 800
+windows_height = 800  # default = 800
 cell_size = windows_height / 8
 
 rows = windows_width // cell_size
@@ -109,12 +109,12 @@ images = load_assets((100, 100))
 
 
 def draw_board():
-    screen.fill((59, 49, 16))
+    screen.fill((133, 94, 66))
 
     for row in range(int(rows)):
         for col in range(int(cols)):
             piece_info = []
-            Rect = pygame.Rect(col * cell_size, row * cell_size, cell_size, cell_size)
+            Rect = pygame.Rect(row * cell_size, col * cell_size, cell_size, cell_size)
             pygame.draw.rect(screen, (0, 0, 0), Rect, 2)
             if board[row][col]["occupied"] == True:
                 piece_type = board[row][col]["piece_type"]
@@ -132,8 +132,42 @@ def get_acceptable_moves():
     pass
 
 
-def move_pieces():
-    pass
+delta_pos = {"first_click": (), "second_click": ()}
+
+
+def move_pieces(click_pos):
+    global delta_pos
+    selected_col = click_pos[0] // 100
+    selected_row = click_pos[1] // 100
+    # NOT DYNAMIC don't change the board size #TODO: get the click position dynamiclly
+
+    if not delta_pos["first_click"]:
+        if board[selected_row][selected_col]["occupied"]:
+            delta_pos["first_click"] = (selected_row, selected_col)
+            print("hey")
+    else:
+        delta_pos["second_click"] = (selected_row, selected_col)
+        first_click_row = delta_pos["first_click"][0]
+        first_click_col = delta_pos["first_click"][1]
+        second_click_row = delta_pos["second_click"][0]
+        second_click_col = delta_pos["second_click"][1]
+
+        temp = board[first_click_row][first_click_col]["occupied"]
+        board[second_click_row][second_click_col]["occupied"] = temp
+        board[first_click_row][first_click_col]["occupied"] = ""
+
+        temp = board[first_click_row][first_click_col]["piece_type"]
+        board[second_click_row][second_click_col]["piece_type"] = temp
+        board[first_click_row][first_click_col]["piece_type"] = ""
+        print(board[second_click_row][second_click_col]["piece_type"])
+
+        temp = board[first_click_row][first_click_col]["piece_color"]
+        board[second_click_row][second_click_col]["piece_color"] = temp
+        board[first_click_row][first_click_col]["piece_color"] = ""
+
+        delta_pos["first_click"] = ()
+        delta_pos["second_click"] = ()
+        draw_board()
 
 
 running = True
@@ -142,6 +176,8 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            move_pieces(event.pos)
 
     pygame.display.flip()
 
