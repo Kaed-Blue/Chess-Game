@@ -48,7 +48,7 @@ def init_board():
                                 {
                                     "occupied": True,
                                     "piece_type": piece_type,
-                                    "piece_color": "black",
+                                    "piece_color": "white",
                                 }
                             )
                         elif row == 0 or row == 1:
@@ -56,12 +56,11 @@ def init_board():
                                 {
                                     "occupied": True,
                                     "piece_type": piece_type,
-                                    "piece_color": "white",
+                                    "piece_color": "black",
                                 }
                             )
 
             board[row].append(cell_dict)
-    # print(board)
 
 
 init_board()
@@ -95,18 +94,18 @@ def load_assets(size):
 
 images = load_assets((100, 100))
 
-black_bishop = images["black_bishop"]
-white_bishop = images["white_bishop"]
-black_king = images["black_king"]
-white_king = images["white_king"]
-black_pawn = images["black_pawn"]
-white_pawn = images["white_pawn"]
-black_knight = images["black_knight"]
-white_knight = images["white_knight"]
-black_queen = images["black_queen"]
-white_queen = images["white_queen"]
-black_rook = images["black_rook"]
-white_rook = images["white_rook"]
+# black_bishop = images["black_bishop"]
+# white_bishop = images["white_bishop"]
+# black_king = images["black_king"]
+# white_king = images["white_king"]
+# black_pawn = images["black_pawn"]
+# white_pawn = images["white_pawn"]
+# black_knight = images["black_knight"]
+# white_knight = images["white_knight"]
+# black_queen = images["black_queen"]
+# white_queen = images["white_queen"]
+# black_rook = images["black_rook"]
+# white_rook = images["white_rook"]
 
 
 def draw_board():
@@ -114,10 +113,15 @@ def draw_board():
 
     for row in range(int(rows)):
         for col in range(int(cols)):
+            piece_info = []
             Rect = pygame.Rect(col * cell_size, row * cell_size, cell_size, cell_size)
             pygame.draw.rect(screen, (0, 0, 0), Rect, 2)
-            # if board[row][col]["occupied"] == True:
-            #     pass
+            if board[row][col]["occupied"] == True:
+                piece_type = board[row][col]["piece_type"]
+                piece_color = board[row][col]["piece_color"]
+                piece_info = [piece_color, piece_type]
+                piece_info = "_".join(piece_info)
+                screen.blit(images[piece_info], (col * cell_size, row * cell_size))
     pygame.display.update()
 
 
@@ -138,9 +142,6 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-
-    screen.blit(black_bishop, (0, 0))
-    screen.blit(white_king, (100, 100))
 
     pygame.display.flip()
 
