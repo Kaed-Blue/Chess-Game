@@ -133,6 +133,7 @@ def get_valid_moves(piece_pos):
                     valid_moves.append((piece_pos[0] - 1, piece_pos[1] + 1))
                 if board[piece_pos[0] - 1][piece_pos[1] - 1]["piece_type"]:
                     valid_moves.append((piece_pos[0] - 1, piece_pos[1] - 1))
+                return
             else:
                 if not board[piece_pos[0] - 1][piece_pos[1]]["piece_type"]:
                     valid_moves.append((piece_pos[0] - 1, piece_pos[1]))
@@ -140,10 +141,27 @@ def get_valid_moves(piece_pos):
                     valid_moves.append((piece_pos[0] - 1, piece_pos[1] + 1))
                 if board[piece_pos[0] - 1][piece_pos[1] - 1]["piece_type"]:
                     valid_moves.append((piece_pos[0] - 1, piece_pos[1] - 1))
-            return
+                return
 
-        if piece_color == "black":
-            pass
+        elif piece_color == "black":
+            if piece_pos[0] == 1:
+                if not board[piece_pos[0] + 1][piece_pos[1]]["piece_type"]:
+                    valid_moves.append((piece_pos[0] + 1, piece_pos[1]))
+                if not board[piece_pos[0] + 2][piece_pos[1]]["piece_type"]:
+                    valid_moves.append((piece_pos[0] + 2, piece_pos[1]))
+                if board[piece_pos[0] + 1][piece_pos[1] + 1]["piece_type"]:
+                    valid_moves.append((piece_pos[0] + 1, piece_pos[1] + 1))
+                if board[piece_pos[0] + 1][piece_pos[1] - 1]["piece_type"]:
+                    valid_moves.append((piece_pos[0] + 1, piece_pos[1] - 1))
+                return
+            else:
+                if not board[piece_pos[0] + 1][piece_pos[1]]["piece_type"]:
+                    valid_moves.append((piece_pos[0] + 1, piece_pos[1]))
+                if board[piece_pos[0] + 1][piece_pos[1] + 1]["piece_type"]:
+                    valid_moves.append((piece_pos[0] + 1, piece_pos[1] + 1))
+                if board[piece_pos[0] + 1][piece_pos[1] - 1]["piece_type"]:
+                    valid_moves.append((piece_pos[0] + 1, piece_pos[1] - 1))
+                return
     else:
         print("no")
 
@@ -179,8 +197,6 @@ def move_pieces(click_pos):
             delta_pos["second_click"] = ()
             return
 
-        # acceptable_moves = get_acceptable_moves(delta_pos["first_click"])
-        # print(acceptable_moves)
         if delta_pos["second_click"] in valid_moves:
             temp = board[first_click_row][first_click_col]["piece_type"]
             board[second_click_row][second_click_col]["piece_type"] = temp
