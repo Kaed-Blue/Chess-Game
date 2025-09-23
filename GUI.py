@@ -86,7 +86,11 @@ def move_pieces(click_pos):
                 delta_pos["second_click"] = ()
                 return
 
-        print(delta_pos)
+        board[delta_pos["second_click"]] = board[delta_pos["first_click"]]
+        board[delta_pos["first_click"]] = "."
+        draw_board(board)
+
+        # print(delta_pos)
         delta_pos["first_click"] = ""
         delta_pos["second_click"] = ""
 
