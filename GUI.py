@@ -69,7 +69,7 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
-            engine.move_pieces(event.pos)
+            engine.get_index_from_position(event.pos)
 
     draw_board()
     pygame.display.flip()
