@@ -1,8 +1,12 @@
 import pygame
-from Engine import board
-from Engine import get_valid_moves
+from Engine import Engine
+
+# from Engine import board
+# from Engine import get_valid_moves
 
 pygame.init()
+clock = pygame.time.Clock()
+engine = Engine()
 
 
 windows_width = 800
@@ -44,7 +48,7 @@ def load_assets(size):
 images = load_assets((100, 100))
 
 
-def draw_board(board):
+def draw_board():
     screen.fill((133, 94, 66))
     cnt = 0
     for row in range(8):
@@ -52,47 +56,10 @@ def draw_board(board):
             Rect = pygame.Rect(row * cell_size, col * cell_size, cell_size, cell_size)
             pygame.draw.rect(screen, (0, 0, 0), Rect, 2)
 
-            if board[cnt] != ".":
-                screen.blit(images[board[cnt]], (col * cell_size, row * cell_size))
+            piece_info = engine.get_piece(cnt)
+            if piece_info != ".":
+                screen.blit(images[piece_info], (col * cell_size, row * cell_size))
             cnt += 1
-
-
-draw_board(board)
-
-
-delta_pos = {"first_click": "", "second_click": ""}
-
-
-def move_pieces(click_pos):
-    global delta_pos
-    selected_col = click_pos[0] // 100
-    selected_row = click_pos[1] // 100
-    index = (selected_row * 8) + selected_col
-    # NOT DYNAMIC don't change the board size #TODO: get the click position dynamiclly
-    if delta_pos["first_click"] == "":
-        if board[index] != ".":
-            delta_pos["first_click"] = index
-            get_valid_moves(index)
-    else:
-        delta_pos["second_click"] = index
-
-        if board[delta_pos["second_click"]].isalpha():
-            if (
-                board[delta_pos["first_click"]].isupper()
-                == board[delta_pos["second_click"]].isupper()
-            ):
-
-                delta_pos["first_click"] = delta_pos["second_click"]
-                delta_pos["second_click"] = ()
-                return
-
-        board[delta_pos["second_click"]] = board[delta_pos["first_click"]]
-        board[delta_pos["first_click"]] = "."
-        draw_board(board)
-
-        # print(delta_pos)
-        delta_pos["first_click"] = ""
-        delta_pos["second_click"] = ""
 
 
 running = True
@@ -102,8 +69,11 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
-            move_pieces(event.pos)
+            engine.move_pieces(event.pos)
 
+    draw_board()
     pygame.display.flip()
+    clock.tick(60)
+
 
 pygame.quit()
