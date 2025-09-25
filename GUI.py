@@ -1,13 +1,9 @@
 import pygame
 from Engine import Engine
 
-# from Engine import board
-# from Engine import get_valid_moves
-
 pygame.init()
 clock = pygame.time.Clock()
 engine = Engine()
-
 
 windows_width = 800
 windows_height = 800
@@ -34,6 +30,7 @@ def load_assets(size):
         "r": "assets/black_rook.png",
         "R": "assets/white_rook.png",
     }
+
     processed_images = {}
     for name, path in image_paths.items():
         try:
@@ -62,6 +59,14 @@ def draw_board():
             cnt += 1
 
 
+def highlight_valid_moves():  # TODO
+    if engine.first_selection:
+        for index in engine.valid_moves:
+            row = index // 8
+            col = (index % 8) - 1
+            print(row, col)
+
+
 running = True
 while running:
 
@@ -71,9 +76,9 @@ while running:
         if event.type == pygame.MOUSEBUTTONDOWN:
             engine.get_index_from_position(event.pos)
 
+    # highlight_valid_moves()
     draw_board()
     pygame.display.flip()
-    clock.tick(60)
-
+    clock.tick(10)
 
 pygame.quit()
