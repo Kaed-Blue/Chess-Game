@@ -53,6 +53,8 @@ def draw_board():
             Rect = pygame.Rect(row * cell_size, col * cell_size, cell_size, cell_size)
             pygame.draw.rect(screen, (0, 0, 0), Rect, 2)
 
+            while engine.get_piece(cnt) == "x":
+                cnt += 1
             piece_info = engine.get_piece(cnt)
             if piece_info != ".":
                 screen.blit(images[piece_info], (col * cell_size, row * cell_size))

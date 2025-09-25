@@ -1,14 +1,17 @@
 class Engine:
     def __init__(self):
         # fmt: off
-        self.board = ["r","n","b","q","k","b","n","r",
-                     "p","p","p","p","p","p","p","p",
-                     ".",".",".",".",".",".",".",".",
-                     ".",".",".",".",".",".",".",".",
-                     ".",".",".",".",".",".",".",".",
-                     ".",".",".",".",".",".",".",".",
-                     "P","P","P","P","P","P","P","P",
-                     "R","N","B","Q","K","B","N","R"]
+        self.board = [
+        "x","x","x","x","x","x","x","x","x","x",
+        "x","r","n","b","q","k","b","n","r","x",    
+        "x","p","p","p","p","p","p","p","p","x",
+        "x",".",".",".",".",".",".",".",".","x",
+        "x",".",".",".",".",".",".",".",".","x",
+        "x",".",".",".",".",".",".",".",".","x",
+        "x",".",".",".",".",".",".",".",".","x",
+        "x","P","P","P","P","P","P","P","P","x",
+        "x","R","N","B","Q","K","B","N","R","x",
+        "x","x","x","x","x","x","x","x","x","x",]
         # fmt: on
         self.delta_pos = {"first_click": "", "second_click": ""}
         self.valid_moves = []
@@ -22,7 +25,7 @@ class Engine:
         selected_row = click_pos[1] // 100
         selected_col = click_pos[0] // 100
         # NOT DYNAMIC don't change the board size #TODO: get the click position dynamiclly
-        index = (selected_row * 8) + selected_col
+        index = ((selected_row * 8) + selected_col) + (selected_row * 2) + 11
         self.get_selections(index)
 
     def get_selections(self, index):
@@ -69,23 +72,23 @@ class Engine:
         }
 
         if self.board[index] == "P":
-            if index // 8 == 6:
-                if self.board[index - 16] == ".":
-                    self.valid_moves.append(index - 16)
-            if self.board[index - 8] == ".":
-                self.valid_moves.append(index - 8)
-            if self.board[index - 7] != ".":  # BUG: edge case index 55, 8
-                self.valid_moves.append(index - 7)
-            if self.board[index - 9] != ".":  # BUG: edge case index 48, 15
+            if index // 10 == 7:
+                if self.board[index - 20] == ".":
+                    self.valid_moves.append(index - 20)
+            if self.board[index - 10] == ".":
+                self.valid_moves.append(index - 10)
+            if self.board[index - 9] != "." and self.board[index - 9] != "x":
                 self.valid_moves.append(index - 9)
+            if self.board[index - 11] != "." and self.board[index - 11] != "x":
+                self.valid_moves.append(index - 11)
 
         if self.board[index] == "p":
-            if index // 8 == 1:
-                if self.board[index + 16] == ".":
-                    self.valid_moves.append(index + 16)
-            if self.board[index + 8] == ".":
-                self.valid_moves.append(index + 8)
-            if self.board[index + 7] != ".":
-                self.valid_moves.append(index + 7)
-            if self.board[index + 9] != ".":
+            if index // 10 == 2:
+                if self.board[index + 20] == ".":
+                    self.valid_moves.append(index + 20)
+            if self.board[index + 10] == ".":
+                self.valid_moves.append(index + 10)
+            if self.board[index + 9] != "." and self.board[index + 9] != "x":
                 self.valid_moves.append(index + 9)
+            if self.board[index + 11] != "." and self.board[index + 11] != "x":
+                self.valid_moves.append(index + 11)
