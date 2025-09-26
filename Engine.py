@@ -95,6 +95,28 @@ class Engine:
             if self.board[index + 11] != "." and self.board[index + 11] != "x":
                 self.valid_moves.append(index + 11)
 
+        if self.board[index] == "n" or self.board[index] == "N":
+            if self.board[index - 21] != "x":
+                self.valid_moves.append(index - 21)
+            if self.board[index - 19] != "x":
+                self.valid_moves.append(index - 19)
+            if self.board[index - 12] != "x":
+                self.valid_moves.append(index - 12)
+            if self.board[index - 8] != "x":
+                self.valid_moves.append(index - 8)
+            if self.board[index + 8] != "x":
+                self.valid_moves.append(index + 8)
+            if self.board[index + 12] != "x":
+                self.valid_moves.append(index + 12)
+            if len(self.board) > index + 19:
+                if self.board[index + 19] != "x":
+                    self.valid_moves.append(index + 19)
+            if len(self.board) > index + 21:
+                if self.board[index + 21] != "x":
+                    self.valid_moves.append(index + 21)
+
+            # -21, -19, -12, -8, +8, +12, +19, +21
+
     def start(self, click_pos):
         index = self.get_index_from_position(click_pos)
         self.get_selections(index)
