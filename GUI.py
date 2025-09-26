@@ -64,9 +64,9 @@ def draw_board():
 def highlight_valid_moves():  # TODO
     if engine.first_selection:
         for index in engine.valid_moves:
-            row = index // 8
-            col = (index % 8) - 1
-            print(row, col)
+            row = (index // 10) - 1
+            # col =
+            pass
 
 
 running = True
@@ -76,9 +76,9 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
-            engine.get_index_from_position(event.pos)
+            engine.start(event.pos)
 
-    # highlight_valid_moves()
+    highlight_valid_moves()
     draw_board()
     pygame.display.flip()
     clock.tick(10)

@@ -22,11 +22,16 @@ class Engine:
         return self.board[index]
 
     def get_index_from_position(self, click_pos):
-        selected_row = click_pos[1] // 100
-        selected_col = click_pos[0] // 100
+        index = (
+            (((click_pos[1] // 100) * 8) + (click_pos[0] // 100))
+            + ((click_pos[1] // 100) * 2)
+            + 11
+        )
         # NOT DYNAMIC don't change the board size #TODO: get the click position dynamiclly
-        index = ((selected_row * 8) + selected_col) + (selected_row * 2) + 11
-        self.get_selections(index)
+        # selected_row = click_pos[1] // 100
+        # selected_col = click_pos[0] // 100
+        # self.get_selections(index)
+        return index
 
     def get_selections(self, index):
         if self.first_selection == None:
@@ -37,7 +42,6 @@ class Engine:
                 # highlight_valid_moves(self.valid_moves)
         else:
             self.second_selection = index
-            self.is_same_color()
 
     def is_same_color(self):
         if self.board[self.second_selection].isalpha():
@@ -50,20 +54,18 @@ class Engine:
                 self.get_valid_moves(self.first_selection)
                 print(self.valid_moves)
                 # highlight_valid_moves(self.valid_moves)
-        self.move_pieces()
 
     def move_pieces(self):
         if self.second_selection in self.valid_moves:
             self.board[self.second_selection] = self.board[self.first_selection]
             self.board[self.first_selection] = "."
-            self.clear_values()
 
     def clear_values(self):
         self.first_selection = None
         self.second_selection = None
         self.valid_moves = []
 
-    def get_valid_moves(self, index):  # TODO: turn index to row and col
+    def get_valid_moves(self, index):
         self.valid_moves = []
         piece_movements = {
             "rook": [8, -8, 1, -1],
@@ -92,3 +94,11 @@ class Engine:
                 self.valid_moves.append(index + 9)
             if self.board[index + 11] != "." and self.board[index + 11] != "x":
                 self.valid_moves.append(index + 11)
+
+    def start(self, click_pos):
+        index = self.get_index_from_position(click_pos)
+        self.get_selections(index)
+        if self.second_selection:
+            self.is_same_color()
+            self.move_pieces()
+            self.clear_values()
