@@ -28,9 +28,6 @@ class Engine:
             + 11
         )
         # NOT DYNAMIC don't change the board size #TODO: get the click position dynamiclly
-        # selected_row = click_pos[1] // 100
-        # selected_col = click_pos[0] // 100
-        # self.get_selections(index)
         return index
 
     def get_selections(self, index):
@@ -39,9 +36,12 @@ class Engine:
                 self.first_selection = index
                 self.get_valid_moves(self.first_selection)
                 print(self.valid_moves)
-                # highlight_valid_moves(self.valid_moves)
+
         else:
             self.second_selection = index
+            if self.is_same_color():
+                self.manage_values("replace")
+                self.get_valid_moves(self.first_selection)
 
     def is_same_color(self):
         if self.board[self.second_selection].isalpha():
@@ -49,21 +49,26 @@ class Engine:
                 self.board[self.first_selection].isupper()
                 == self.board[self.second_selection].isupper()
             ):
-                self.first_selection = self.second_selection
-                self.second_selection = None
-                self.get_valid_moves(self.first_selection)
-                print(self.valid_moves)
-                # highlight_valid_moves(self.valid_moves)
+                return True
 
     def move_pieces(self):
         if self.second_selection in self.valid_moves:
             self.board[self.second_selection] = self.board[self.first_selection]
             self.board[self.first_selection] = "."
+            self.manage_values("clear")
 
-    def clear_values(self):
-        self.first_selection = None
-        self.second_selection = None
-        self.valid_moves = []
+    def manage_values(self, order):
+
+        if order == "replace":
+            self.first_selection = self.second_selection
+            self.second_selection = None
+            # self.get_valid_moves(self.first_selection)
+            # print(self.valid_moves)
+
+        elif order == "clear":
+            self.first_selection = None
+            self.second_selection = None
+            self.valid_moves = []
 
     def get_valid_moves(self, index):
         self.valid_moves = []
@@ -123,4 +128,3 @@ class Engine:
         if self.second_selection:
             self.is_same_color()
             self.move_pieces()
-            self.clear_values()

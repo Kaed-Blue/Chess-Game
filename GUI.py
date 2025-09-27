@@ -59,14 +59,18 @@ def draw_board():
             if piece_info != ".":
                 screen.blit(images[piece_info], (col * cell_size, row * cell_size))
             cnt += 1
+    highlight_valid_moves()
 
 
 def highlight_valid_moves():  # TODO
+    # print("hey")
     if engine.first_selection:
+        # print("yo")
         for index in engine.valid_moves:
             row = (index // 10) - 1
-            # col =
-            pass
+            col = (index % 10) - 1
+            Rect = pygame.Rect(col * cell_size, row * cell_size, cell_size, cell_size)
+            pygame.draw.rect(screen, (0, 255, 0), Rect, 2)
 
 
 running = True
@@ -78,7 +82,7 @@ while running:
         if event.type == pygame.MOUSEBUTTONDOWN:
             engine.start(event.pos)
 
-    highlight_valid_moves()
+    # highlight_valid_moves()
     draw_board()
     pygame.display.flip()
     clock.tick(10)
