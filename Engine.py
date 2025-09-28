@@ -39,17 +39,19 @@ class Engine:
 
         else:
             self.second_selection = index
-            if self.is_same_color():
+            if self.is_same_color(self.first_selection, self.second_selection):
                 self.manage_values("replace")
                 self.get_valid_moves(self.first_selection)
+                print(self.valid_moves)
 
-    def is_same_color(self):
-        if self.board[self.second_selection].isalpha():
-            if (
-                self.board[self.first_selection].isupper()
-                == self.board[self.second_selection].isupper()
-            ):
+    def is_same_color(self, index_1, index_2):
+        if self.board[index_2].isalpha():
+            if self.board[index_1].isupper() == self.board[index_2].isupper():
                 return True
+            else:
+                return False
+        else:
+            return False
 
     def move_pieces(self):
         if self.second_selection in self.valid_moves:
@@ -58,12 +60,9 @@ class Engine:
             self.manage_values("clear")
 
     def manage_values(self, order):
-
         if order == "replace":
             self.first_selection = self.second_selection
             self.second_selection = None
-            # self.get_valid_moves(self.first_selection)
-            # print(self.valid_moves)
 
         elif order == "clear":
             self.first_selection = None
@@ -73,9 +72,10 @@ class Engine:
     def get_valid_moves(self, index):
         self.valid_moves = []
         piece_movements = {
-            "rook": [8, -8, 1, -1],
-            "bishop": [9, -9, 7, -7],
-            "queen": [8, -8, 1, -1, 9, -9, 7, -7],
+            "rook": [10, -10, 1, -1],
+            "bishop": [11, -11, 9, -9],
+            "queen": [10, -10, 1, -1, 11, -11, 9, -9],
+            "knight": [21, 19, 12, 8, -8, -12, -19, -21],
         }
 
         if self.board[index] == "P":
@@ -101,30 +101,30 @@ class Engine:
                 self.valid_moves.append(index + 11)
 
         if self.board[index] == "n" or self.board[index] == "N":
-            if self.board[index - 21] != "x":
-                self.valid_moves.append(index - 21)
-            if self.board[index - 19] != "x":
-                self.valid_moves.append(index - 19)
-            if self.board[index - 12] != "x":
-                self.valid_moves.append(index - 12)
-            if self.board[index - 8] != "x":
-                self.valid_moves.append(index - 8)
-            if self.board[index + 8] != "x":
-                self.valid_moves.append(index + 8)
-            if self.board[index + 12] != "x":
-                self.valid_moves.append(index + 12)
-            if len(self.board) > index + 19:
-                if self.board[index + 19] != "x":
-                    self.valid_moves.append(index + 19)
-            if len(self.board) > index + 21:
-                if self.board[index + 21] != "x":
-                    self.valid_moves.append(index + 21)
+            for move in piece_movements["knight"]:
+                if index + move < len(self.board):
+                    if self.board[index + move] != "x" and not self.is_same_color(
+                        index, index + move
+                    ):
+                        self.valid_moves.append(index + move)
 
-            # -21, -19, -12, -8, +8, +12, +19, +21
+        if self.board[index] == "r" or self.board[index] == "R":
+            for move in piece_movements["rook"]:
+                i = 1
+                while self.board[index + move] != "x" and not self.is_same_color(
+                    index, index + move
+                ):
+                    self.valid_moves.append(index + move)
+                    if self.board[index + move] != "." and not self.is_same_color(
+                        index, index + move
+                    ):
+                        break
+                    move += move // i
+                    i += 1
 
     def start(self, click_pos):
         index = self.get_index_from_position(click_pos)
         self.get_selections(index)
         if self.second_selection:
-            self.is_same_color()
+            self.is_same_color(self.first_selection, self.second_selection)
             self.move_pieces()

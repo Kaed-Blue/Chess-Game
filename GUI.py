@@ -51,7 +51,7 @@ def draw_board():
     for row in range(8):
         for col in range(8):
             Rect = pygame.Rect(row * cell_size, col * cell_size, cell_size, cell_size)
-            pygame.draw.rect(screen, (0, 0, 0), Rect, 2)
+            pygame.draw.rect(screen, (0, 0, 0), Rect, 1)
 
             while engine.get_piece(cnt) == "x":
                 cnt += 1
@@ -63,14 +63,12 @@ def draw_board():
 
 
 def highlight_valid_moves():  # TODO
-    # print("hey")
     if engine.first_selection:
-        # print("yo")
         for index in engine.valid_moves:
             row = (index // 10) - 1
             col = (index % 10) - 1
             Rect = pygame.Rect(col * cell_size, row * cell_size, cell_size, cell_size)
-            pygame.draw.rect(screen, (0, 255, 0), Rect, 2)
+            pygame.draw.rect(screen, (0, 255, 0), Rect, 1)
 
 
 running = True
