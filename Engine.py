@@ -16,6 +16,7 @@ class Engine:
         self.valid_moves = []
         self.first_selection = None
         self.second_selection = None
+        self.is_white_turn = True
 
     def get_piece(self, index):
         while self.board[index] == "x":
@@ -30,19 +31,34 @@ class Engine:
         )
         return index
 
-    def get_selections(self, index):
-        if self.first_selection == None:
-            if self.board[index] != ".":
-                self.first_selection = index
-                self.get_valid_moves(self.first_selection)
-                print(self.valid_moves)
+    def manage_turn(self, index, order):
+        if order == "check_turn":
+            if self.board[index].isupper() and self.is_white_turn:
+                return True
+            if self.board[index].isupper() and not self.is_white_turn:
+                return False
+            if not self.board[index].isupper() and self.is_white_turn:
+                return False
+            if not self.board[index].isupper() and not self.is_white_turn:
+                return True
 
-        else:
-            self.second_selection = index
-            if self.is_same_color(self.first_selection, self.second_selection):
-                self.manage_values("replace")
-                self.get_valid_moves(self.first_selection)
-                print(self.valid_moves)
+        if order == "pass_turn":
+            self.is_white_turn = not self.is_white_turn
+
+    def get_selections(self, index):
+        if self.manage_turn(index, "check_turn") or self.board[index] == ".":
+            if self.first_selection == None:
+                if self.board[index] != ".":
+                    self.first_selection = index
+                    self.get_valid_moves(self.first_selection)
+                    print(self.valid_moves)
+
+            else:
+                self.second_selection = index
+                if self.is_same_color(self.first_selection, self.second_selection):
+                    self.manage_values("replace")
+                    self.get_valid_moves(self.first_selection)
+                    print(self.valid_moves)
 
     def is_same_color(self, index_1, index_2):
         if self.board[index_2].isalpha():
@@ -58,6 +74,7 @@ class Engine:
             self.board[self.second_selection] = self.board[self.first_selection]
             self.board[self.first_selection] = "."
             self.manage_values("clear")
+            self.manage_turn(None, "pass_turn")
 
     def manage_values(self, order):
         if order == "replace":
@@ -99,6 +116,14 @@ class Engine:
                     index, index + move
                 ):
                     self.valid_moves.append(index + move)
+
+        if self.board[index] == "n" or self.board[index] == "N":
+            for move in piece_movements["knight"]:
+                if index + move < len(self.board):
+                    if self.board[index + move] != "x" and not self.is_same_color(
+                        index, index + move
+                    ):
+                        self.valid_moves.append(index + move)
 
         if self.board[index].lower() == "r":
             for move in piece_movements["rook"]:
@@ -149,6 +174,9 @@ class Engine:
                         index, index + move
                     ):
                         self.valid_moves.append(index + move)
+
+    def is_check(self, king_index):
+        pass
 
     def start(self, click_pos, cell_size):
         index = self.get_index_from_position(click_pos, cell_size)
