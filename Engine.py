@@ -13,21 +13,21 @@ class Engine:
         "x","R","N","B","Q","K","B","N","R","x",
         "x","x","x","x","x","x","x","x","x","x",]
         # fmt: on
-        self.delta_pos = {"first_click": "", "second_click": ""}
         self.valid_moves = []
-        self.first_selection = None  # TODO: try to make selection vars local
+        self.first_selection = None
         self.second_selection = None
 
     def get_piece(self, index):
-        return self.board[index]
+        while self.board[index] == "x":
+            index += 1
+        return self.board[index], index
 
-    def get_index_from_position(self, click_pos):
+    def get_index_from_position(self, click_pos, cell_size):
         index = (
-            (((click_pos[1] // 100) * 8) + (click_pos[0] // 100))
-            + ((click_pos[1] // 100) * 2)
+            (((click_pos[1] // cell_size) * 8) + (click_pos[0] // cell_size))
+            + ((click_pos[1] // cell_size) * 2)  # index offset correction
             + 11
         )
-        # NOT DYNAMIC don't change the board size #TODO: get the click position dynamiclly
         return index
 
     def get_selections(self, index):
@@ -71,15 +71,22 @@ class Engine:
 
     def get_valid_moves(self, index):
         self.valid_moves = []
-        piece_movements = {
-            "rook": [10, -10, 1, -1],
-            "bishop": [11, -11, 9, -9],
-            "queen_king": [10, -10, 1, -1, 11, -11, 9, -9],
-            "knight": [21, 19, 12, 8, -8, -12, -19, -21],
+        row = int(len(self.board) ** (1 / 2))
+        piece_movements = {  # TODO: make movement even more abstracted (and clean)
+            "rook": [row, -row, 1, -1],
+            "bishop": [row + 1, -row - 1, row - 1, -row + 1],
+            "queen_king": [row, -row, 1, -1, row + 1, -row - 1, row - 1, -row + 1],
+            "knight": [(2 * row) + 1, (2 * row) - 1, row + 2, row - 2, -row + 2, -row - 2, (2 * -row) + 1, (2 * -row) - 1,], # fmt: skip
+            "pawn": {
+                "duble_front": 2 * row,
+                "front": row,
+                "diagnal_left": row - 1,
+                "diagnal_right": row + 1,
+            },
         }
 
-        if self.board[index] == "P":
-            if index // 10 == 7:
+        if self.board[index] == "P":  # TODO: deduplicate code for pawns
+            if index // 10 == 7:  # TODO: refactor pawn movement logic
                 if self.board[index - 20] == "." and not self.is_same_color(
                     index, index - 20
                 ):
@@ -182,8 +189,8 @@ class Engine:
                     ):
                         self.valid_moves.append(index + move)
 
-    def start(self, click_pos):
-        index = self.get_index_from_position(click_pos)
+    def start(self, click_pos, cell_size):
+        index = self.get_index_from_position(click_pos, cell_size)
         self.get_selections(index)
         if self.second_selection:
             self.is_same_color(self.first_selection, self.second_selection)

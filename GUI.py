@@ -5,14 +5,13 @@ pygame.init()
 clock = pygame.time.Clock()
 engine = Engine()
 
-windows_width = 800
-windows_height = 800
-cell_size = windows_width / 8
+windows_width = 1000
+cell_size = windows_width // 8
 
 rows = windows_width // cell_size
-cols = windows_height // cell_size
+cols = windows_width // cell_size
 
-screen = pygame.display.set_mode((windows_width, windows_height))
+screen = pygame.display.set_mode((windows_width, windows_width))
 
 
 def load_assets(size):
@@ -42,27 +41,25 @@ def load_assets(size):
     return processed_images
 
 
-images = load_assets((100, 100))
+images = load_assets((cell_size, cell_size))
 
 
 def draw_board():
     screen.fill((133, 94, 66))
-    cnt = 0
+    index = 0
     for row in range(8):
         for col in range(8):
-            Rect = pygame.Rect(row * cell_size, col * cell_size, cell_size, cell_size)
+            Rect = pygame.Rect(col * cell_size, row * cell_size, cell_size, cell_size)
             pygame.draw.rect(screen, (0, 0, 0), Rect, 1)
 
-            while engine.get_piece(cnt) == "x":
-                cnt += 1
-            piece_info = engine.get_piece(cnt)
+            piece_info, index = engine.get_piece(index)
             if piece_info != ".":
                 screen.blit(images[piece_info], (col * cell_size, row * cell_size))
-            cnt += 1
+            index += 1
     highlight_valid_moves()
 
 
-def highlight_valid_moves():  # TODO
+def highlight_valid_moves():  # TODO: make engine return row and col directly
     if engine.first_selection:
         for index in engine.valid_moves:
             row = (index // 10) - 1
@@ -78,11 +75,14 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
-            engine.start(event.pos)
+            engine.start(event.pos, cell_size)
 
-    # highlight_valid_moves()
     draw_board()
     pygame.display.flip()
     clock.tick(10)
 
 pygame.quit()
+
+# TODO: add hower highlighting
+# TODO: make board look better
+# TODO: add turn system
