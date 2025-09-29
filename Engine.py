@@ -77,69 +77,30 @@ class Engine:
             "bishop": [row + 1, -row - 1, row - 1, -row + 1],
             "queen_king": [row, -row, 1, -1, row + 1, -row - 1, row - 1, -row + 1],
             "knight": [(2 * row) + 1, (2 * row) - 1, row + 2, row - 2, -row + 2, -row - 2, (2 * -row) + 1, (2 * -row) - 1,], # fmt: skip
-            "pawn": {
-                "duble_front": 2 * row,
-                "front": row,
-                "diagnal_left": row - 1,
-                "diagnal_right": row + 1,
-            },
         }
 
-        if self.board[index] == "P":  # TODO: deduplicate code for pawns
-            if index // 10 == 7:  # TODO: refactor pawn movement logic
-                if self.board[index - 20] == "." and not self.is_same_color(
-                    index, index - 20
+        if self.board[index].lower() == "p":
+            if self.board[index] == "P":
+                move = -(row)
+                diag_move = [-(row + 1), -(row - 1)]
+            else:
+                move = row
+                diag_move = [row + 1, row - 1]
+
+            rank = index // 10
+            if rank == 7 or rank == 2:
+                if self.board[index + (2 * move)] == ".":
+                    self.valid_moves.append(index + (2 * move))
+            if self.board[index + move] == ".":
+                self.valid_moves.append(index + move)
+
+            for move in diag_move:
+                if self.board[index + move] != "." and not self.is_same_color(
+                    index, index + move
                 ):
-                    self.valid_moves.append(index - 20)
-            if self.board[index - 10] == "." and not self.is_same_color(
-                index, index - 10
-            ):
-                self.valid_moves.append(index - 10)
-            if (
-                self.board[index - 9] != "."
-                and self.board[index - 9] != "x"
-                and not self.is_same_color(index, index - 9)
-            ):
-                self.valid_moves.append(index - 9)
-            if (
-                self.board[index - 11] != "."
-                and self.board[index - 11] != "x"
-                and not self.is_same_color(index, index - 11)
-            ):
-                self.valid_moves.append(index - 11)
+                    self.valid_moves.append(index + move)
 
-        if self.board[index] == "p":
-            if index // 10 == 2:
-                if self.board[index + 20] == "." and not self.is_same_color(
-                    index, index + 20
-                ):
-                    self.valid_moves.append(index + 20)
-            if self.board[index + 10] == "." and not self.is_same_color(
-                index, index + 10
-            ):
-                self.valid_moves.append(index + 10)
-            if (
-                self.board[index + 9] != "."
-                and self.board[index + 9] != "x"
-                and not self.is_same_color(index, index + 9)
-            ):
-                self.valid_moves.append(index + 9)
-            if (
-                self.board[index + 11] != "."
-                and self.board[index + 11] != "x"
-                and not self.is_same_color(index, index + 11)
-            ):
-                self.valid_moves.append(index + 11)
-
-        if self.board[index] == "n" or self.board[index] == "N":
-            for move in piece_movements["knight"]:
-                if index + move < len(self.board):
-                    if self.board[index + move] != "x" and not self.is_same_color(
-                        index, index + move
-                    ):
-                        self.valid_moves.append(index + move)
-
-        if self.board[index] == "r" or self.board[index] == "R":
+        if self.board[index].lower() == "r":
             for move in piece_movements["rook"]:
                 i = 1
                 while self.board[index + move] != "x" and not self.is_same_color(
@@ -153,7 +114,7 @@ class Engine:
                     move += move // i
                     i += 1
 
-        if self.board[index] == "b" or self.board[index] == "B":
+        if self.board[index].lower() == "b":
             for move in piece_movements["bishop"]:
                 i = 1
                 while self.board[index + move] != "x" and not self.is_same_color(
@@ -167,7 +128,7 @@ class Engine:
                     move += move // i
                     i += 1
 
-        if self.board[index] == "q" or self.board[index] == "Q":
+        if self.board[index].lower() == "q":
             for move in piece_movements["queen_king"]:
                 i = 1
                 while self.board[index + move] != "x" and not self.is_same_color(
@@ -181,7 +142,7 @@ class Engine:
                     move += move // i
                     i += 1
 
-        if self.board[index] == "k" or self.board[index] == "K":
+        if self.board[index].lower() == "k":
             for move in piece_movements["queen_king"]:
                 if index + move < len(self.board):
                     if self.board[index + move] != "x" and not self.is_same_color(
