@@ -33,14 +33,8 @@ class Engine:
 
     def manage_turn(self, index, order):
         if order == "check_turn":
-            if self.board[index].isupper() and self.is_white_turn:
-                return True
-            if self.board[index].isupper() and not self.is_white_turn:
-                return False
-            if not self.board[index].isupper() and self.is_white_turn:
-                return False
-            if not self.board[index].isupper() and not self.is_white_turn:
-                return True
+            piece_is_white = self.board[index].isupper()
+            return piece_is_white == self.is_white_turn
 
         if order == "pass_turn":
             self.is_white_turn = not self.is_white_turn
