@@ -63,8 +63,16 @@ def highlight_valid_moves():  # TODO: make engine return row and col directly
     if engine.first_selection:
         for index in engine.valid_moves:
             row, col = engine.get_position_from_index(index)
-            Rect = pygame.Rect(col * cell_size, row * cell_size, cell_size, cell_size)
-            pygame.draw.rect(screen, (0, 255, 0), Rect, 1)
+            Rect = pygame.Rect(
+                (col * cell_size) + 10,
+                (row * cell_size) + 10,
+                cell_size - 20,
+                cell_size - 20,
+            )
+            if engine.board[index] == ".":
+                pygame.draw.rect(screen, (0, 255, 0), Rect, 1)
+            else:
+                pygame.draw.rect(screen, (255, 0, 0), Rect, 1)
 
 
 running = True
@@ -84,4 +92,3 @@ pygame.quit()
 
 # TODO: add hower highlighting
 # TODO: make board look better
-# TODO: add turn system
