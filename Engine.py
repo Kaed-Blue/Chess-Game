@@ -30,6 +30,11 @@ class Engine:
             + 11
         )
         return index
+    
+    def get_position_from_index(self, index):
+        row = (index // 10) - 1
+        col = (index % 10) - 1 
+        return row, col      
 
     def manage_turn(self, index, order):
         if order == "check_turn":
@@ -40,19 +45,20 @@ class Engine:
             self.is_white_turn = not self.is_white_turn
 
     def get_selections(self, index):
-        if self.manage_turn(index, "check_turn") or self.board[index] == ".":
-            if self.first_selection == None:
+        if self.first_selection == None:
+            if self.manage_turn(index, "check_turn"):
                 if self.board[index] != ".":
                     self.first_selection = index
                     self.get_valid_moves(self.first_selection)
                     print(self.valid_moves)
 
-            else:
-                self.second_selection = index
-                if self.is_same_color(self.first_selection, self.second_selection):
-                    self.manage_values("replace")
-                    self.get_valid_moves(self.first_selection)
-                    print(self.valid_moves)
+        else:
+            self.second_selection = index
+            print (self.second_selection)
+            if self.is_same_color(self.first_selection, self.second_selection):
+                self.manage_values("replace")
+                self.get_valid_moves(self.first_selection)
+                print(self.valid_moves)
 
     def is_same_color(self, index_1, index_2):
         if self.board[index_2].isalpha():
@@ -169,7 +175,7 @@ class Engine:
                     ):
                         self.valid_moves.append(index + move)
 
-    def is_check(self, king_index):
+    def is_check(self, king_index):  # TODO
         pass
 
     def start(self, click_pos, cell_size):
