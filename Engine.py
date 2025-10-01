@@ -17,8 +17,9 @@ class Engine:
         self.first_selection = None
         self.second_selection = None
         self.is_white_turn = True
+        self.king_pos = {"white_king": 85, "black_king": 15}
 
-    def get_piece(self, index):
+    def get_piece(self, index): # TODO: refactor
         while self.board[index] == "x":
             index += 1
         return self.board[index], index
@@ -71,10 +72,22 @@ class Engine:
 
     def move_pieces(self):
         if self.second_selection in self.valid_moves:
+            self.track_king_pos()
             self.board[self.second_selection] = self.board[self.first_selection]
             self.board[self.first_selection] = "."
+            self.is_check()
             self.manage_values("clear")
             self.manage_turn(None, "pass_turn")
+
+    def track_king_pos(self):
+        if self.board[self.first_selection].lower() == "k":
+            if self.is_white_turn:
+                self.king_pos["white_king"] = self.second_selection
+            else:
+                self.king_pos["black_king"] = self.second_selection
+                
+    def is_check(self):  # TODO
+        pass
 
     def manage_values(self, order):
         if order == "replace":
@@ -175,8 +188,6 @@ class Engine:
                     ):
                         self.valid_moves.append(index + move)
 
-    def is_check(self, king_index):  # TODO
-        pass
 
     def start(self, click_pos, cell_size):
         index = self.get_index_from_position(click_pos, cell_size)
