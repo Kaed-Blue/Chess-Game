@@ -19,8 +19,9 @@ class Engine:
         self.is_white_turn = True
         self.king_pos = {"white_king": 85, "black_king": 15}
         self.row = int(len(self.board) ** (1 / 2))
+        self.in_check_index = None
 
-    def get_piece(self, index): # TODO: refactor
+    def get_piece(self, index):  # TODO: refactor
         while self.board[index] == "x":
             index += 1
         return self.board[index], index
@@ -35,8 +36,8 @@ class Engine:
 
     def get_position_from_index(self, index):
         row = (index // 10) - 1
-        col = (index % 10) - 1 
-        return row, col      
+        col = (index % 10) - 1
+        return row, col
 
     def manage_turn(self, index, order):
         if order == "check_turn":
@@ -78,15 +79,9 @@ class Engine:
             self.track_king_pos()
             self.board[self.second_selection] = self.board[self.first_selection]
             self.board[self.first_selection] = "."
-            self.each_turn_check()
-            self.manage_values("clear")
             self.manage_turn(None, "pass_turn")
-
-    def each_turn_check(self):
-        if self.is_white(self.second_selection):
-            self.in_check(self.king_pos["white_king"], 0)
-        else:
-            self.in_check(self.king_pos["black_king"], 0)
+            self.in_check_index = self.in_check()
+            self.manage_values("clear")
 
     def track_king_pos(self):
         if self.board[self.first_selection].lower() == "k":
@@ -95,9 +90,18 @@ class Engine:
             else:
                 self.king_pos["black_king"] = self.second_selection
 
-    def under_attack(self, index, king_index):  # TODO: use is_withe method
+    def in_check(self):
+        if not self.is_white(self.second_selection):
+            if self.under_attack(self.king_pos["white_king"]):
+                return self.king_pos["white_king"]
+            return None
+        else:
+            if self.under_attack(self.king_pos["black_king"]):
+                return self.king_pos["black_king"]
+            return None
 
-        if self.is_white(king_index):
+    def under_attack(self, index):
+        if self.is_white_turn:
             row = -(self.row)
         else:
             row = self.row
@@ -108,24 +112,37 @@ class Engine:
             "knight": [(2 * row) + 1, (2 * row) - 1, row + 2, row - 2, -row + 2, -row - 2, (2 * -row) + 1, (2 * -row) - 1,], # fmt: skip
         }
 
+        for move in piece_movements["rook"]:
+            i = 1
+            while self.board[index + move] != "x" and self.board[index + move] == ".":
+                move += move // i
+                i += 1
+            if (
+                self.board[index + move].lower() == "r" or self.board[index + move].lower() == "q"
+                and self.board[index + move].isupper() != self.is_white_turn
+            ):
+                print("attacked by rook")
+                return True
+            
+        for move in piece_movements["bishop"]:
+            i = 1
+            while self.board[index + move] != "x" and self.board[index + move] == ".":
+                move += move // i
+                i += 1
+            if (
+                self.board[index + move].lower() == "b" or self.board[index + move].lower() == "q"
+                and self.board[index + move].isupper() != self.is_white_turn
+            ):
+                print("attacked by bishop")
+                return True
+            
         for move in [index + row + 1, index + row - 1]:
             if (
                 self.board[move].lower() == "p"
                 and self.board[move].isupper() != self.is_white_turn
             ):
-                print("attacked")
+                print("attacked by pawn")
                 return True
-
-    def in_check(self, king_index, move):  # FIXME
-
-        assumed_king_index = king_index + move
-        # self.board[assumed_king_index] = self.board[king_index]
-        # self.board[king_index] = "."
-
-        if self.under_attack(assumed_king_index, king_index):
-            return True
-        else:
-            return False
 
     def manage_values(self, order):
         if order == "replace":
@@ -224,7 +241,7 @@ class Engine:
                     if (
                         self.board[index + move] != "x"
                         and not self.is_same_color(index, index + move)
-                        and not self.in_check(index, move)
+                        and not self.under_attack(index + move)
                     ):
                         self.valid_moves.append(index + move)
 
