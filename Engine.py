@@ -118,7 +118,7 @@ class Engine:
                 move += move // i
                 i += 1
             if (
-                self.board[index + move].lower() == "r" or self.board[index + move].lower() == "q"
+                (self.board[index + move].lower() == "r" or self.board[index + move].lower() == "q")
                 and self.board[index + move].isupper() != self.is_white_turn
             ):
                 print("attacked by rook")
@@ -130,7 +130,7 @@ class Engine:
                 move += move // i
                 i += 1
             if (
-                self.board[index + move].lower() == "b" or self.board[index + move].lower() == "q"
+                (self.board[index + move].lower() == "b" or self.board[index + move].lower() == "q")
                 and self.board[index + move].isupper() != self.is_white_turn
             ):
                 print("attacked by bishop")
@@ -162,6 +162,16 @@ class Engine:
             self.first_selection = None
             self.second_selection = None
             self.valid_moves = []
+
+    def check_in_psudoboard(self, first_index, second_index):
+        self.board[second_index] = self.board[first_index]
+        self.second_selection = first_index
+        self.board[first_index] = "."
+        flag = self.in_check()
+        self.second_selection = None
+        self.board[first_index] = self.board[second_index]
+        self.board[second_index] = "."
+        return flag
 
     def get_valid_moves(self, index):
         self.valid_moves = []
