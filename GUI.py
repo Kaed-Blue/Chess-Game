@@ -5,7 +5,7 @@ pygame.init()
 clock = pygame.time.Clock()
 engine = Engine()
 
-windows_width = 1000
+windows_width = 700
 cell_size = windows_width // 8
 
 rows = windows_width // cell_size
@@ -57,6 +57,20 @@ def draw_board():
                 screen.blit(images[piece_info], (col * cell_size, row * cell_size))
             index += 1
     highlight_valid_moves()
+    highlight_in_check()
+
+
+def highlight_in_check():
+    if engine.in_check_index:
+        index = engine.in_check_index
+        row, col = engine.get_position_from_index(index)
+        Rect = pygame.Rect(
+            (col * cell_size) + 10,
+            (row * cell_size) + 10,
+            cell_size - 20,
+            cell_size - 20,
+        )
+        pygame.draw.rect(screen, (200, 50, 0), Rect, 2)
 
 
 def highlight_valid_moves():  # TODO: make engine return row and col directly
@@ -70,9 +84,9 @@ def highlight_valid_moves():  # TODO: make engine return row and col directly
                 cell_size - 20,
             )
             if engine.board[index] == ".":
-                pygame.draw.rect(screen, (0, 255, 0), Rect, 1)
+                pygame.draw.rect(screen, (0, 255, 0), Rect, 2)
             else:
-                pygame.draw.rect(screen, (255, 0, 0), Rect, 1)
+                pygame.draw.rect(screen, (255, 0, 0), Rect, 2)
 
 
 running = True
