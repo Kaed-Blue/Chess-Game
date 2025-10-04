@@ -19,7 +19,7 @@ class Engine:
         self.is_white_turn = True
         self.king_pos = {"white_king": 85, "black_king": 15}
         self.row = int(len(self.board) ** (1 / 2))
-        self.in_check_index = None
+        self.king_in_check_index = None
 
     def get_piece(self, index):  # TODO: refactor
         while self.board[index] == "x":
@@ -80,7 +80,7 @@ class Engine:
             self.board[self.second_selection] = self.board[self.first_selection]
             self.board[self.first_selection] = "."
             self.manage_turn(None, "pass_turn")
-            self.in_check_index = self.in_check()
+            self.king_in_check_index = self.in_check()
             self.manage_values("clear")
 
     def track_king_pos(self):
@@ -112,7 +112,7 @@ class Engine:
             "knight": [(2 * row) + 1, (2 * row) - 1, row + 2, row - 2, -row + 2, -row - 2, (2 * -row) + 1, (2 * -row) - 1,], # fmt: skip
         }
 
-        for move in piece_movements["rook"]:
+        for move in piece_movements["rook"]: #BUG: sliding pieces color check
             i = 1
             while self.board[index + move] != "x" and self.board[index + move] == ".":
                 move += move // i
@@ -135,6 +135,15 @@ class Engine:
             ):
                 print("attacked by bishop")
                 return True
+        
+        for move in piece_movements["knight"]:
+            if index + move < len(self.board):
+                if (
+                    self.board[index + move].lower() == "n"
+                    and self.board[index + move].isupper() != self.is_white_turn
+                ):
+                    print("attacked by knight")
+                    return True
             
         for move in [index + row + 1, index + row - 1]:
             if (
