@@ -3,7 +3,7 @@ class Engine:
         # fmt: off
         self.board = [
         "x","x","x","x","x","x","x","x","x","x",
-        "x","r","n","b","q","k","b","n","r","x",    
+        "x","r","n","b","q","k","b","n","r","x",
         "x","p","p","p","p","p","p","p","p","x",
         "x",".",".",".",".",".",".",".",".","x",
         "x",".",".",".",".",".",".",".",".","x",
@@ -52,53 +52,80 @@ class Engine:
                 if self.board[index] != ".":
                     self.first_selection = index
                     self.get_valid_moves(self.first_selection)
-                    print(self.valid_moves)
+                    # print(self.valid_moves)
 
         else:
             self.second_selection = index
-            print (self.second_selection)
+            # print (self.second_selection)
             if self.is_same_color(self.first_selection, self.second_selection):
                 self.manage_values("replace")
                 self.get_valid_moves(self.first_selection)
-                print(self.valid_moves)
+                # print(self.valid_moves)
 
     def is_same_color(self, index_1, index_2):
         if self.board[index_1].isalpha() and self.board[index_2].isalpha():
             return self.board[index_1].isupper() == self.board[index_2].isupper()
         return False
-    
+
+    def is_white(self, index):
+        if self.board[index].isupper():
+            return True
+        else:
+            return False
+
     def move_pieces(self):
         if self.second_selection in self.valid_moves:
             self.track_king_pos()
             self.board[self.second_selection] = self.board[self.first_selection]
             self.board[self.first_selection] = "."
+            self.each_turn_check()
             self.manage_values("clear")
             self.manage_turn(None, "pass_turn")
-            self.manage_check_turn()
 
-    def manage_check_turn(self):
-        if self.is_white_turn:
-            self.in_check(self.king_pos["white_king"])
+    def each_turn_check(self):
+        if self.is_white(self.second_selection):
+            self.in_check(self.king_pos["white_king"], 0)
         else:
-            self.in_check(self.king_pos["black_king"])
+            self.in_check(self.king_pos["black_king"], 0)
 
     def track_king_pos(self):
         if self.board[self.first_selection].lower() == "k":
-            if self.is_white_turn:
+            if self.is_white(self.first_selection):
                 self.king_pos["white_king"] = self.second_selection
             else:
                 self.king_pos["black_king"] = self.second_selection
 
-    def in_check(self, king_index):
-        if self.is_white_turn:
+    def under_attack(self, index, king_index):  # TODO: use is_withe method
+
+        if self.is_white(king_index):
             row = -(self.row)
         else:
             row = self.row
 
-        for index in [king_index + row + 1, king_index + row - 1]:
-            if self.board[index].lower() == "p" and self.board[index].isupper() != self.is_white_turn:
+        piece_movements = {
+            "rook": [row, -row, 1, -1],
+            "bishop": [row + 1, -row - 1, row - 1, -row + 1],
+            "knight": [(2 * row) + 1, (2 * row) - 1, row + 2, row - 2, -row + 2, -row - 2, (2 * -row) + 1, (2 * -row) - 1,], # fmt: skip
+        }
+
+        for move in [index + row + 1, index + row - 1]:
+            if (
+                self.board[move].lower() == "p"
+                and self.board[move].isupper() != self.is_white_turn
+            ):
+                print("attacked")
                 return True
-        return False
+
+    def in_check(self, king_index, move):  # FIXME
+
+        assumed_king_index = king_index + move
+        # self.board[assumed_king_index] = self.board[king_index]
+        # self.board[king_index] = "."
+
+        if self.under_attack(assumed_king_index, king_index):
+            return True
+        else:
+            return False
 
     def manage_values(self, order):
         if order == "replace":
@@ -113,7 +140,7 @@ class Engine:
     def get_valid_moves(self, index):
         self.valid_moves = []
         row = self.row
-        piece_movements = {  # TODO: make movement even more abstracted (and clean)
+        piece_movements = {
             "rook": [row, -row, 1, -1],
             "bishop": [row + 1, -row - 1, row - 1, -row + 1],
             "queen_king": [row, -row, 1, -1, row + 1, -row - 1, row - 1, -row + 1],
@@ -197,7 +224,7 @@ class Engine:
                     if (
                         self.board[index + move] != "x"
                         and not self.is_same_color(index, index + move)
-                        and not self.in_check(index + move)
+                        and not self.in_check(index, move)
                     ):
                         self.valid_moves.append(index + move)
 
