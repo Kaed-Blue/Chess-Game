@@ -83,6 +83,7 @@ class Engine:
             self.king_in_check_index = self.in_check()
             self.manage_values("clear")
 
+
     def track_king_pos(self):
         if self.board[self.first_selection].lower() == "k":
             if self.is_white(self.first_selection):
@@ -91,7 +92,7 @@ class Engine:
                 self.king_pos["black_king"] = self.second_selection
 
     def in_check(self):
-        if not self.is_white(self.second_selection):
+        if self.is_white_turn:
             if self.under_attack(self.king_pos["white_king"]):
                 return self.king_pos["white_king"]
             return None
@@ -106,7 +107,7 @@ class Engine:
         else:
             row = self.row
 
-        piece_movements = {
+        piece_movements = { #TODO: add king
             "rook": [row, -row, 1, -1],
             "bishop": [row + 1, -row - 1, row - 1, -row + 1],
             "knight": [(2 * row) + 1, (2 * row) - 1, row + 2, row - 2, -row + 2, -row - 2, (2 * -row) + 1, (2 * -row) - 1,], # fmt: skip
@@ -118,24 +119,24 @@ class Engine:
                 move += move // i
                 i += 1
             if (
-                (self.board[index + move].lower() == "r" or self.board[index + move].lower() == "q")
-                and self.board[index + move].isupper() != self.is_white_turn
-            ):
+                self.board[index + move].lower() == "r"
+                or self.board[index + move].lower() == "q"
+            ) and self.board[index + move].isupper() != self.is_white_turn:
                 print("attacked by rook")
                 return True
-            
+
         for move in piece_movements["bishop"]:
             i = 1
             while self.board[index + move] != "x" and self.board[index + move] == ".":
                 move += move // i
                 i += 1
             if (
-                (self.board[index + move].lower() == "b" or self.board[index + move].lower() == "q")
-                and self.board[index + move].isupper() != self.is_white_turn
-            ):
+                self.board[index + move].lower() == "b"
+                or self.board[index + move].lower() == "q"
+            ) and self.board[index + move].isupper() != self.is_white_turn:
                 print("attacked by bishop")
                 return True
-        
+
         for move in piece_movements["knight"]:
             if index + move < len(self.board):
                 if (
@@ -144,7 +145,7 @@ class Engine:
                 ):
                     print("attacked by knight")
                     return True
-            
+
         for move in [index + row + 1, index + row - 1]:
             if (
                 self.board[move].lower() == "p"
@@ -152,6 +153,9 @@ class Engine:
             ):
                 print("attacked by pawn")
                 return True
+        
+    def uncheck():
+        pass
 
     def manage_values(self, order):
         if order == "replace":
@@ -164,13 +168,12 @@ class Engine:
             self.valid_moves = []
 
     def check_in_psudoboard(self, first_index, second_index):
+        temp = self.board[second_index]
         self.board[second_index] = self.board[first_index]
-        self.second_selection = first_index
         self.board[first_index] = "."
         flag = self.in_check()
-        self.second_selection = None
         self.board[first_index] = self.board[second_index]
-        self.board[second_index] = "."
+        self.board[second_index] = temp
         return flag
 
     def get_valid_moves(self, index):
@@ -192,11 +195,11 @@ class Engine:
                 diag_move = [row + 1, row - 1]
 
             rank = index // 10
-            if rank == 7 or rank == 2:
-                if self.board[index + (2 * move)] == ".":
-                    self.valid_moves.append(index + (2 * move))
-            if self.board[index + move] == ".":
+            if self.board[index + move] == "." and not self.check_in_psudoboard(index, index + move):
                 self.valid_moves.append(index + move)
+                if rank == 7 or rank == 2:
+                    if self.board[index + (2 * move)] == ".":
+                        self.valid_moves.append(index + (2 * move))
 
             for move in diag_move:
                 if self.board[index + move] != "." and not self.is_same_color(
@@ -209,7 +212,7 @@ class Engine:
                 if index + move < len(self.board):
                     if self.board[index + move] != "x" and not self.is_same_color(
                         index, index + move
-                    ):
+                    ) and not self.check_in_psudoboard(index, index + move):
                         self.valid_moves.append(index + move)
 
         if self.board[index].lower() == "r":
@@ -217,7 +220,7 @@ class Engine:
                 i = 1
                 while self.board[index + move] != "x" and not self.is_same_color(
                     index, index + move
-                ):
+                ) and not self.check_in_psudoboard(index, index + move):
                     self.valid_moves.append(index + move)
                     if self.board[index + move] != "." and not self.is_same_color(
                         index, index + move
@@ -231,7 +234,7 @@ class Engine:
                 i = 1
                 while self.board[index + move] != "x" and not self.is_same_color(
                     index, index + move
-                ):
+                ) and not self.check_in_psudoboard(index, index + move):
                     self.valid_moves.append(index + move)
                     if self.board[index + move] != "." and not self.is_same_color(
                         index, index + move
@@ -245,7 +248,7 @@ class Engine:
                 i = 1
                 while self.board[index + move] != "x" and not self.is_same_color(
                     index, index + move
-                ):
+                ) and not self.check_in_psudoboard(index, index + move):
                     self.valid_moves.append(index + move)
                     if self.board[index + move] != "." and not self.is_same_color(
                         index, index + move
