@@ -80,7 +80,7 @@ class Engine:
             self.board[self.second_selection] = self.board[self.first_selection]
             self.board[self.first_selection] = "."
             self.manage_turn(None, "pass_turn")
-            self.king_in_check_index = self.in_check()
+            self.in_check()
             self.manage_values("clear")
 
     def track_king_pos(self):
@@ -91,14 +91,12 @@ class Engine:
                 self.king_pos["black_king"] = self.second_selection
 
     def in_check(self):
-        if self.is_white_turn:
-            if self.under_attack(self.king_pos["white_king"]):
-                return self.king_pos["white_king"]
-            return None
-        else:
-            if self.under_attack(self.king_pos["black_king"]):
-                return self.king_pos["black_king"]
-            return None
+        king_key = "white_king" if self.is_white_turn else "black_king"
+        king_pos = self.king_pos[king_key]
+        if self.under_attack(king_pos):
+            self.king_in_check_index = king_pos
+            self.uncheck()
+        return False
 
     def under_attack(self, index):
         if self.is_white_turn:
@@ -153,7 +151,7 @@ class Engine:
                 print("attacked by pawn")
                 return True
 
-    def uncheck():
+    def uncheck(self):
         pass
 
     def manage_values(self, order):
