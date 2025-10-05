@@ -61,8 +61,8 @@ def draw_board():
 
 
 def highlight_in_check():
-    if engine.in_check_index:
-        index = engine.in_check_index
+    if engine.king_in_check_index:
+        index = engine.king_in_check_index
         row, col = engine.get_position_from_index(index)
         Rect = pygame.Rect(
             (col * cell_size) + 10,
