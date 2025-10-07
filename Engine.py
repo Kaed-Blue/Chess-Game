@@ -13,7 +13,7 @@ class Engine:
         "x","R","N","B","Q","K","B","N","R","x",
         "x","x","x","x","x","x","x","x","x","x",]
         # fmt: on
-        self.valid_moves = []
+        self.psudo_legal_moves = []
         self.first_selection = None
         self.second_selection = None
         self.is_white_turn = True
@@ -52,7 +52,7 @@ class Engine:
             if self.manage_turn(index, "check_turn"):
                 if self.board[index] != ".":
                     self.first_selection = index
-                    self.get_valid_moves(self.first_selection)
+                    self.get_psudo_legal_moves(self.first_selection)
                     # print(self.valid_moves)
 
         else:
@@ -60,7 +60,7 @@ class Engine:
             # print (self.second_selection)
             if self.is_same_color(self.first_selection, self.second_selection):
                 self.manage_values("replace")
-                self.get_valid_moves(self.first_selection)
+                self.get_psudo_legal_moves(self.first_selection)
                 # print(self.valid_moves)
 
     def is_same_color(self, index_1, index_2):
@@ -75,7 +75,7 @@ class Engine:
             return False
 
     def move_pieces(self):
-        if self.second_selection in self.valid_moves:
+        if self.second_selection in self.psudo_legal_moves:
             self.track_king_pos()
             self.board[self.second_selection] = self.board[self.first_selection]
             self.board[self.first_selection] = "."
@@ -95,7 +95,8 @@ class Engine:
         king_pos = self.king_pos[king_key]
         if self.under_attack(king_pos):
             self.king_in_check_index = king_pos
-            self.uncheck()
+            return True
+        self.king_in_check_index = None
         return False
 
     def under_attack(self, index):
@@ -151,9 +152,6 @@ class Engine:
                 print("attacked by pawn")
                 return True
 
-    def uncheck(self):
-        pass
-
     def manage_values(self, order):
         if order == "replace":
             self.first_selection = self.second_selection
@@ -162,7 +160,7 @@ class Engine:
         elif order == "clear":
             self.first_selection = None
             self.second_selection = None
-            self.valid_moves = []
+            self.psudo_legal_moves = []
 
     def check_in_psudoboard(self, first_index, second_index):
         temp = self.board[second_index]
@@ -173,8 +171,8 @@ class Engine:
         self.board[second_index] = temp
         return flag
 
-    def get_valid_moves(self, index):
-        self.valid_moves = []
+    def get_psudo_legal_moves(self, index):
+        self.psudo_legal_moves = []
         row = self.row
         piece_movements = {
             "rook": [row, -row, 1, -1],
@@ -195,16 +193,18 @@ class Engine:
             if self.board[index + move] == "." and not self.check_in_psudoboard(
                 index, index + move
             ):
-                self.valid_moves.append(index + move)
+                self.psudo_legal_moves.append(index + move)
                 if rank == 7 or rank == 2:
                     if self.board[index + (2 * move)] == ".":
-                        self.valid_moves.append(index + (2 * move))
+                        self.psudo_legal_moves.append(index + (2 * move))
 
             for move in diag_move:
-                if self.board[index + move] != "." and not self.is_same_color(
-                    index, index + move
+                if (
+                    self.board[index + move] != "."
+                    and not self.is_same_color(index, index + move)
+                    and not self.check_in_psudoboard(index, index + move)
                 ):
-                    self.valid_moves.append(index + move)
+                    self.psudo_legal_moves.append(index + move)
 
         if self.board[index] == "n" or self.board[index] == "N":
             for move in piece_movements["knight"]:
@@ -214,7 +214,7 @@ class Engine:
                         and not self.is_same_color(index, index + move)
                         and not self.check_in_psudoboard(index, index + move)
                     ):
-                        self.valid_moves.append(index + move)
+                        self.psudo_legal_moves.append(index + move)
 
         if self.board[index].lower() == "r":
             for move in piece_movements["rook"]:
@@ -224,7 +224,7 @@ class Engine:
                     and not self.is_same_color(index, index + move)
                     and not self.check_in_psudoboard(index, index + move)
                 ):
-                    self.valid_moves.append(index + move)
+                    self.psudo_legal_moves.append(index + move)
                     if self.board[index + move] != "." and not self.is_same_color(
                         index, index + move
                     ):
@@ -240,7 +240,7 @@ class Engine:
                     and not self.is_same_color(index, index + move)
                     and not self.check_in_psudoboard(index, index + move)
                 ):
-                    self.valid_moves.append(index + move)
+                    self.psudo_legal_moves.append(index + move)
                     if self.board[index + move] != "." and not self.is_same_color(
                         index, index + move
                     ):
@@ -256,7 +256,7 @@ class Engine:
                     and not self.is_same_color(index, index + move)
                     and not self.check_in_psudoboard(index, index + move)
                 ):
-                    self.valid_moves.append(index + move)
+                    self.psudo_legal_moves.append(index + move)
                     if self.board[index + move] != "." and not self.is_same_color(
                         index, index + move
                     ):
@@ -272,7 +272,10 @@ class Engine:
                         and not self.is_same_color(index, index + move)
                         and not self.under_attack(index + move)
                     ):
-                        self.valid_moves.append(index + move)
+                        self.psudo_legal_moves.append(index + move)
+
+    def legal_moves(self, index, psudo_legal_moves):
+        pass
 
     def start(self, click_pos, cell_size):
         index = self.get_index_from_position(click_pos, cell_size)
