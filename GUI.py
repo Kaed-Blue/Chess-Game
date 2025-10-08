@@ -75,7 +75,7 @@ def highlight_in_check():
 
 def highlight_valid_moves():
     if engine.first_selection:
-        for index in engine.psudo_legal_moves:
+        for index in engine.legal_moves:
             row, col = engine.get_position_from_index(index)
             Rect = pygame.Rect(
                 (col * cell_size) + 10,

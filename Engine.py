@@ -13,7 +13,7 @@ class Engine:
         "x","R","N","B","Q","K","B","N","R","x",
         "x","x","x","x","x","x","x","x","x","x",]
         # fmt: on
-        self.psudo_legal_moves = []
+        self.legal_moves = []
         self.first_selection = None
         self.second_selection = None
         self.is_white_turn = True
@@ -52,16 +52,13 @@ class Engine:
             if self.manage_turn(index, "check_turn"):
                 if self.board[index] != ".":
                     self.first_selection = index
-                    self.get_psudo_legal_moves(self.first_selection)
-                    # print(self.valid_moves)
+                    self.get_legal_moves(self.first_selection)
 
         else:
             self.second_selection = index
-            # print (self.second_selection)
             if self.is_same_color(self.first_selection, self.second_selection):
                 self.manage_values("replace")
-                self.get_psudo_legal_moves(self.first_selection)
-                # print(self.valid_moves)
+                self.get_legal_moves(self.first_selection)
 
     def is_same_color(self, index_1, index_2):
         if self.board[index_1].isalpha() and self.board[index_2].isalpha():
@@ -75,20 +72,20 @@ class Engine:
             return False
 
     def move_pieces(self):
-        if self.second_selection in self.psudo_legal_moves:
-            self.track_king_pos()
+        if self.second_selection in self.legal_moves:
+            self.track_king_pos(self.first_selection, self.second_selection)
             self.board[self.second_selection] = self.board[self.first_selection]
             self.board[self.first_selection] = "."
             self.manage_turn(None, "pass_turn")
             self.in_check()
             self.manage_values("clear")
 
-    def track_king_pos(self):
-        if self.board[self.first_selection].lower() == "k":
-            if self.is_white(self.first_selection):
-                self.king_pos["white_king"] = self.second_selection
+    def track_king_pos(self, first_selection, second_selection):
+        if self.board[first_selection].lower() == "k":
+            if self.is_white_turn:  # TODO: turn to is_white_turn
+                self.king_pos["white_king"] = second_selection
             else:
-                self.king_pos["black_king"] = self.second_selection
+                self.king_pos["black_king"] = second_selection
 
     def in_check(self):
         king_key = "white_king" if self.is_white_turn else "black_king"
@@ -98,6 +95,9 @@ class Engine:
             return True
         self.king_in_check_index = None
         return False
+
+    def update_GUI_related_values(self):
+        pass
 
     def under_attack(self, index):
         if self.is_white_turn:
@@ -156,23 +156,26 @@ class Engine:
         if order == "replace":
             self.first_selection = self.second_selection
             self.second_selection = None
+            self.legal_moves = []
 
         elif order == "clear":
             self.first_selection = None
             self.second_selection = None
-            self.psudo_legal_moves = []
+            self.legal_moves = []
 
-    def check_in_psudoboard(self, first_index, second_index):
-        temp = self.board[second_index]
-        self.board[second_index] = self.board[first_index]
-        self.board[first_index] = "."
+    def check_in_psudoboard(self, origin, destination):
+        temp = self.board[destination]
+        self.track_king_pos(origin, destination)
+        self.board[destination] = self.board[origin]
+        self.board[origin] = "."
         flag = self.in_check()
-        self.board[first_index] = self.board[second_index]
-        self.board[second_index] = temp
+        self.track_king_pos(destination, origin)
+        self.board[origin] = self.board[destination]
+        self.board[destination] = temp
         return flag
 
     def get_psudo_legal_moves(self, index):
-        self.psudo_legal_moves = []
+        psudo_legal_moves = []
         row = self.row
         piece_movements = {
             "rook": [row, -row, 1, -1],
@@ -181,7 +184,7 @@ class Engine:
             "knight": [(2 * row) + 1, (2 * row) - 1, row + 2, row - 2, -row + 2, -row - 2, (2 * -row) + 1, (2 * -row) - 1,], # fmt: skip
         }
 
-        if self.board[index].lower() == "p":
+        if self.board[index].lower() == "p":  # TODO: turn into elif
             if self.board[index] == "P":
                 move = -(row)
                 diag_move = [-(row + 1), -(row - 1)]
@@ -190,41 +193,33 @@ class Engine:
                 diag_move = [row + 1, row - 1]
 
             rank = index // 10
-            if self.board[index + move] == "." and not self.check_in_psudoboard(
-                index, index + move
-            ):
-                self.psudo_legal_moves.append(index + move)
+            if self.board[index + move] == ".":
+                psudo_legal_moves.append(index + move)
                 if rank == 7 or rank == 2:
                     if self.board[index + (2 * move)] == ".":
-                        self.psudo_legal_moves.append(index + (2 * move))
+                        psudo_legal_moves.append(index + (2 * move))
 
             for move in diag_move:
-                if (
-                    self.board[index + move] != "."
-                    and not self.is_same_color(index, index + move)
-                    and not self.check_in_psudoboard(index, index + move)
+                if self.board[index + move] != "." and not self.is_same_color(
+                    index, index + move
                 ):
-                    self.psudo_legal_moves.append(index + move)
+                    psudo_legal_moves.append(index + move)
 
         if self.board[index] == "n" or self.board[index] == "N":
             for move in piece_movements["knight"]:
                 if index + move < len(self.board):
-                    if (
-                        self.board[index + move] != "x"
-                        and not self.is_same_color(index, index + move)
-                        and not self.check_in_psudoboard(index, index + move)
+                    if self.board[index + move] != "x" and not self.is_same_color(
+                        index, index + move
                     ):
-                        self.psudo_legal_moves.append(index + move)
+                        psudo_legal_moves.append(index + move)
 
         if self.board[index].lower() == "r":
             for move in piece_movements["rook"]:
                 i = 1
-                while (
-                    self.board[index + move] != "x"
-                    and not self.is_same_color(index, index + move)
-                    and not self.check_in_psudoboard(index, index + move)
+                while self.board[index + move] != "x" and not self.is_same_color(
+                    index, index + move
                 ):
-                    self.psudo_legal_moves.append(index + move)
+                    psudo_legal_moves.append(index + move)
                     if self.board[index + move] != "." and not self.is_same_color(
                         index, index + move
                     ):
@@ -235,12 +230,10 @@ class Engine:
         if self.board[index].lower() == "b":
             for move in piece_movements["bishop"]:
                 i = 1
-                while (
-                    self.board[index + move] != "x"
-                    and not self.is_same_color(index, index + move)
-                    and not self.check_in_psudoboard(index, index + move)
+                while self.board[index + move] != "x" and not self.is_same_color(
+                    index, index + move
                 ):
-                    self.psudo_legal_moves.append(index + move)
+                    psudo_legal_moves.append(index + move)
                     if self.board[index + move] != "." and not self.is_same_color(
                         index, index + move
                     ):
@@ -251,12 +244,10 @@ class Engine:
         if self.board[index].lower() == "q":
             for move in piece_movements["queen_king"]:
                 i = 1
-                while (
-                    self.board[index + move] != "x"
-                    and not self.is_same_color(index, index + move)
-                    and not self.check_in_psudoboard(index, index + move)
+                while self.board[index + move] != "x" and not self.is_same_color(
+                    index, index + move
                 ):
-                    self.psudo_legal_moves.append(index + move)
+                    psudo_legal_moves.append(index + move)
                     if self.board[index + move] != "." and not self.is_same_color(
                         index, index + move
                     ):
@@ -267,15 +258,17 @@ class Engine:
         if self.board[index].lower() == "k":
             for move in piece_movements["queen_king"]:
                 if index + move < len(self.board):
-                    if (
-                        self.board[index + move] != "x"
-                        and not self.is_same_color(index, index + move)
-                        and not self.under_attack(index + move)
+                    if self.board[index + move] != "x" and not self.is_same_color(
+                        index, index + move
                     ):
-                        self.psudo_legal_moves.append(index + move)
+                        psudo_legal_moves.append(index + move)
+        return psudo_legal_moves
 
-    def legal_moves(self, index, psudo_legal_moves):
-        pass
+    def get_legal_moves(self, index):
+        psudo_legal_moves = self.get_psudo_legal_moves(index)
+        for move in psudo_legal_moves:
+            if not self.check_in_psudoboard(index, move):
+                self.legal_moves.append(move)
 
     def start(self, click_pos, cell_size):
         index = self.get_index_from_position(click_pos, cell_size)
