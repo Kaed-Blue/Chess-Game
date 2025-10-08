@@ -5,7 +5,7 @@ pygame.init()
 clock = pygame.time.Clock()
 engine = Engine()
 
-windows_width = 700
+windows_width = 720
 cell_size = windows_width // 8
 
 rows = windows_width // cell_size
@@ -16,18 +16,18 @@ screen = pygame.display.set_mode((windows_width, windows_width))
 
 def load_assets(size):
     image_paths = {
-        "b": "assets/black_bishop.png",
-        "B": "assets/white_bishop.png",
-        "k": "assets/black_king.png",
-        "K": "assets/white_king.png",
-        "p": "assets/black_pawn.png",
-        "P": "assets/white_pawn.png",
-        "q": "assets/black_queen.png",
-        "Q": "assets/white_queen.png",
-        "n": "assets/black_knight.png",
-        "N": "assets/white_knight.png",
-        "r": "assets/black_rook.png",
-        "R": "assets/white_rook.png",
+        "b": "assets/bb.png",
+        "B": "assets/wb.png",
+        "k": "assets/bk.png",
+        "K": "assets/wk.png",
+        "p": "assets/bp.png",
+        "P": "assets/wp.png",
+        "q": "assets/bq.png",
+        "Q": "assets/wq.png",
+        "n": "assets/bn.png",
+        "N": "assets/wn.png",
+        "r": "assets/br.png",
+        "R": "assets/wr.png",
     }
 
     processed_images = {}
@@ -45,18 +45,30 @@ images = load_assets((cell_size, cell_size))
 
 
 def draw_board():
-    screen.fill((133, 94, 66))
+    # screen.fill((133, 94, 66))
     index = 0
+    alter = False
     for row in range(8):
+        alter = not alter
         for col in range(8):
             Rect = pygame.Rect(col * cell_size, row * cell_size, cell_size, cell_size)
+            if alter:
+                pygame.draw.rect(
+                    screen, (140, 90, 60), Rect, 0
+                )  # (100, 70, 40), (140, 90, 60)
+            else:
+                pygame.draw.rect(
+                    screen, (70, 40, 20), Rect, 0
+                )  # (181, 136, 99), (70, 40, 20)
+            alter = not alter
+
             pygame.draw.rect(screen, (0, 0, 0), Rect, 1)
 
             piece_info, index = engine.get_piece(index)
             if piece_info != ".":
                 screen.blit(images[piece_info], (col * cell_size, row * cell_size))
             index += 1
-    highlight_valid_moves()
+    highlight_legal_moves()
     highlight_in_check()
 
 
@@ -73,7 +85,7 @@ def highlight_in_check():
         pygame.draw.rect(screen, (200, 50, 0), Rect, 2)
 
 
-def highlight_valid_moves():
+def highlight_legal_moves():
     if engine.first_selection:
         for index in engine.legal_moves:
             row, col = engine.get_position_from_index(index)
@@ -105,4 +117,3 @@ while running:
 pygame.quit()
 
 # TODO: add hower highlighting
-# TODO: make board look better
