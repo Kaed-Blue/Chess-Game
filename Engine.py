@@ -18,7 +18,7 @@ class Engine:
         self.second_selection = None
         self.is_white_turn = True
         self.king_pos = {"white_king": 85, "black_king": 15}
-        self.row = int(len(self.board) ** (1 / 2))
+        self.one_row = int(len(self.board) ** (1 / 2))
         self.king_in_check_index = None
 
     def get_piece(self, index):  # TODO: refactor
@@ -76,13 +76,27 @@ class Engine:
             self.track_king_pos(self.first_selection, self.second_selection)
             self.board[self.second_selection] = self.board[self.first_selection]
             self.board[self.first_selection] = "."
-            self.manage_turn(None, "pass_turn")
-            self.in_check()
-            self.manage_values("clear")
+            self.manage_game_state()
+
+    def manage_game_state(self):
+        self.make_promotion(self.second_selection)
+        self.manage_turn(None, "pass_turn")
+        self.in_check()
+        self.manage_values("clear")
+
+    def make_promotion(self, index, promote_to=None):
+        rank = index // 10
+        white_piece = self.is_white(index)
+        if self.board[index].lower() == "p" and rank in (1, 8):
+            if promote_to is None:
+                self.board[index] = "Q" if white_piece else "q"
+            else:
+                self.board[index] = promote_to.upper() if white_piece else promote_to.lower()
+            
 
     def track_king_pos(self, first_selection, second_selection):
         if self.board[first_selection].lower() == "k":
-            if self.is_white_turn:  # TODO: turn to is_white_turn
+            if self.is_white_turn:
                 self.king_pos["white_king"] = second_selection
             else:
                 self.king_pos["black_king"] = second_selection
@@ -101,14 +115,15 @@ class Engine:
 
     def under_attack(self, index):
         if self.is_white_turn:
-            row = -(self.row)
+            row = -(self.one_row)
         else:
-            row = self.row
+            row = self.one_row
 
         piece_movements = {  # TODO: add king
             "rook": [row, -row, 1, -1],
             "bishop": [row + 1, -row - 1, row - 1, -row + 1],
             "knight": [(2 * row) + 1, (2 * row) - 1, row + 2, row - 2, -row + 2, -row - 2, (2 * -row) + 1, (2 * -row) - 1,], # fmt: skip
+            "king": [row, -row, 1, -1, row + 1, -row -1, row - 1, -row + 1]
         }
 
         for move in piece_movements["rook"]:
@@ -120,7 +135,7 @@ class Engine:
                 self.board[index + move].lower() == "r"
                 or self.board[index + move].lower() == "q"
             ) and self.board[index + move].isupper() != self.is_white_turn:
-                print("attacked by rook")
+                # print("attacked by rook")
                 return True
 
         for move in piece_movements["bishop"]:
@@ -132,7 +147,7 @@ class Engine:
                 self.board[index + move].lower() == "b"
                 or self.board[index + move].lower() == "q"
             ) and self.board[index + move].isupper() != self.is_white_turn:
-                print("attacked by bishop")
+                # print("attacked by bishop")
                 return True
 
         for move in piece_movements["knight"]:
@@ -141,15 +156,18 @@ class Engine:
                     self.board[index + move].lower() == "n"
                     and self.board[index + move].isupper() != self.is_white_turn
                 ):
-                    print("attacked by knight")
+                    # print("attacked by knight")
                     return True
+                
+        # for move in piece_movements["king"]:
+        #     if self.board
 
         for move in [index + row + 1, index + row - 1]:
             if (
                 self.board[move].lower() == "p"
                 and self.board[move].isupper() != self.is_white_turn
             ):
-                print("attacked by pawn")
+                # print("attacked by pawn")
                 return True
 
     def manage_values(self, order):
@@ -163,20 +181,10 @@ class Engine:
             self.second_selection = None
             self.legal_moves = []
 
-    def check_in_psudoboard(self, origin, destination):
-        temp = self.board[destination]
-        self.track_king_pos(origin, destination)
-        self.board[destination] = self.board[origin]
-        self.board[origin] = "."
-        flag = self.in_check()
-        self.track_king_pos(destination, origin)
-        self.board[origin] = self.board[destination]
-        self.board[destination] = temp
-        return flag
 
     def get_psudo_legal_moves(self, index):
         psudo_legal_moves = []
-        row = self.row
+        row = self.one_row
         piece_movements = {
             "rook": [row, -row, 1, -1],
             "bishop": [row + 1, -row - 1, row - 1, -row + 1],
@@ -270,6 +278,17 @@ class Engine:
             if not self.check_in_psudoboard(index, move):
                 self.legal_moves.append(move)
 
+    def check_in_psudoboard(self, origin, destination):
+        temp = self.board[destination]
+        self.track_king_pos(origin, destination)
+        self.board[destination] = self.board[origin]
+        self.board[origin] = "."
+        flag = self.in_check()
+        self.track_king_pos(destination, origin)
+        self.board[origin] = self.board[destination]
+        self.board[destination] = temp
+        return flag
+    
     def start(self, click_pos, cell_size):
         index = self.get_index_from_position(click_pos, cell_size)
         self.get_selections(index)
