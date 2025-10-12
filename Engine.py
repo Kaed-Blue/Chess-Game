@@ -14,6 +14,7 @@ class Engine:
         "x","x","x","x","x","x","x","x","x","x",]
         # fmt: on
         self.legal_moves = []
+        self.history = []
         self.first_selection = None
         self.second_selection = None
         self.is_white_turn = True
@@ -74,6 +75,7 @@ class Engine:
     def move_pieces(self):
         if self.second_selection in self.legal_moves:
             self.track_king_pos(self.first_selection, self.second_selection)
+            self.add_history(self.first_selection, self.second_selection)
             self.board[self.second_selection] = self.board[self.first_selection]
             self.board[self.first_selection] = "."
             self.manage_game_state()
@@ -83,6 +85,13 @@ class Engine:
         self.manage_turn(None, "pass_turn")
         self.in_check()
         self.manage_values("clear")
+
+    def add_history(self, from_index, to_index):
+        piece_type = self.board[from_index]
+        taken = self.board[to_index] if self.board[to_index] != '.' else None
+        last_move = (piece_type, from_index, to_index, taken)
+        self.history.append(last_move)
+        print(last_move)
 
     def make_promotion(self, index, promote_to=None):
         rank = index // 10
@@ -110,9 +119,6 @@ class Engine:
         self.king_in_check_index = None
         return False
 
-    def update_GUI_related_values(self):
-        pass
-
     def under_attack(self, index):
         if self.is_white_turn:
             row = -(self.one_row)
@@ -135,7 +141,6 @@ class Engine:
                 self.board[index + move].lower() == "r"
                 or self.board[index + move].lower() == "q"
             ) and self.board[index + move].isupper() != self.is_white_turn:
-                # print("attacked by rook")
                 return True
 
         for move in piece_movements["bishop"]:
@@ -147,7 +152,6 @@ class Engine:
                 self.board[index + move].lower() == "b"
                 or self.board[index + move].lower() == "q"
             ) and self.board[index + move].isupper() != self.is_white_turn:
-                # print("attacked by bishop")
                 return True
 
         for move in piece_movements["knight"]:
@@ -156,7 +160,6 @@ class Engine:
                     self.board[index + move].lower() == "n"
                     and self.board[index + move].isupper() != self.is_white_turn
                 ):
-                    # print("attacked by knight")
                     return True
                 
         # for move in piece_movements["king"]:
@@ -167,7 +170,6 @@ class Engine:
                 self.board[move].lower() == "p"
                 and self.board[move].isupper() != self.is_white_turn
             ):
-                # print("attacked by pawn")
                 return True
 
     def manage_values(self, order):
@@ -192,7 +194,7 @@ class Engine:
             "knight": [(2 * row) + 1, (2 * row) - 1, row + 2, row - 2, -row + 2, -row - 2, (2 * -row) + 1, (2 * -row) - 1,], # fmt: skip
         }
 
-        if self.board[index].lower() == "p":  # TODO: turn into elif
+        if self.board[index].lower() == "p":
             if self.board[index] == "P":
                 move = -(row)
                 diag_move = [-(row + 1), -(row - 1)]
@@ -213,7 +215,7 @@ class Engine:
                 ):
                     psudo_legal_moves.append(index + move)
 
-        if self.board[index] == "n" or self.board[index] == "N":
+        elif self.board[index] == "n" or self.board[index] == "N":
             for move in piece_movements["knight"]:
                 if index + move < len(self.board):
                     if self.board[index + move] != "x" and not self.is_same_color(
@@ -221,7 +223,7 @@ class Engine:
                     ):
                         psudo_legal_moves.append(index + move)
 
-        if self.board[index].lower() == "r":
+        elif self.board[index].lower() == "r":
             for move in piece_movements["rook"]:
                 i = 1
                 while self.board[index + move] != "x" and not self.is_same_color(
@@ -235,7 +237,7 @@ class Engine:
                     move += move // i
                     i += 1
 
-        if self.board[index].lower() == "b":
+        elif self.board[index].lower() == "b":
             for move in piece_movements["bishop"]:
                 i = 1
                 while self.board[index + move] != "x" and not self.is_same_color(
@@ -249,7 +251,7 @@ class Engine:
                     move += move // i
                     i += 1
 
-        if self.board[index].lower() == "q":
+        elif self.board[index].lower() == "q":
             for move in piece_movements["queen_king"]:
                 i = 1
                 while self.board[index + move] != "x" and not self.is_same_color(
@@ -263,7 +265,7 @@ class Engine:
                     move += move // i
                     i += 1
 
-        if self.board[index].lower() == "k":
+        elif self.board[index].lower() == "k":
             for move in piece_movements["queen_king"]:
                 if index + move < len(self.board):
                     if self.board[index + move] != "x" and not self.is_same_color(
@@ -295,3 +297,5 @@ class Engine:
         if self.second_selection:
             self.is_same_color(self.first_selection, self.second_selection)
             self.move_pieces()
+
+ # TODO: move history and undo
