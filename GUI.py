@@ -2,16 +2,18 @@ import pygame
 from Engine import Engine
 
 pygame.init()
+pygame.display.set_caption("Chess Game")
 clock = pygame.time.Clock()
 engine = Engine()
 
-windows_width = 720
+windows_width = 760
+windows_height = 810
 cell_size = windows_width // 8
 
-rows = windows_width // cell_size
+rows = windows_width // cell_size  # you can just put 8
 cols = windows_width // cell_size
 
-screen = pygame.display.set_mode((windows_width, windows_width))
+screen = pygame.display.set_mode((windows_width, windows_height))
 
 
 def load_assets(size):
@@ -28,6 +30,8 @@ def load_assets(size):
         "N": "assets/wn.png",
         "r": "assets/br.png",
         "R": "assets/wr.png",
+        "undo_button": "assets/undo.png",
+        "redo_button": "assets/redo.png",
     }
 
     processed_images = {}
@@ -44,8 +48,36 @@ def load_assets(size):
 images = load_assets((cell_size, cell_size))
 
 
+class Button:
+    def __init__(self, x, y, image, scale):
+        width, height = image.get_width(), image.get_height()
+        self.image = pygame.transform.scale(
+            image, (int((width * scale)), int((height * scale)))
+        )
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
+        self.clicked = False
+
+    def draw_button(self):
+        screen.blit(self.image, (self.rect.x, self.rect.y))
+
+    def action(self):
+        if pygame.mouse.get_pressed()[0] == 1:
+            pos = pygame.mouse.get_pos()
+            if self.rect.collidepoint(pos) and self.clicked == False:
+                self.clicked = True
+                return True
+
+        if pygame.mouse.get_pressed()[0] == 0:
+            self.clicked = False
+        return False
+
+
+undo_button = Button(20, 750, images["undo_button"], 0.65)
+redo_button = Button(100, 750, images["redo_button"], 0.65)
+
 def draw_board():
-    # screen.fill((133, 94, 66))
+    screen.fill((133, 94, 66))
     index = 0
     alter = False
     for row in range(8):
@@ -54,11 +86,11 @@ def draw_board():
             Rect = pygame.Rect(col * cell_size, row * cell_size, cell_size, cell_size)
             if alter:
                 pygame.draw.rect(
-                    screen, (140, 90, 60), Rect, 0
+                    screen, (100, 70, 40), Rect, 0
                 )  # (100, 70, 40), (140, 90, 60)
             else:
                 pygame.draw.rect(
-                    screen, (70, 40, 20), Rect, 0
+                    screen, (181, 136, 99), Rect, 0
                 )  # (181, 136, 99), (70, 40, 20)
             alter = not alter
 
@@ -70,6 +102,8 @@ def draw_board():
             index += 1
     highlight_legal_moves()
     highlight_in_check()
+    undo_button.draw_button()
+    redo_button.draw_button()
 
 
 def highlight_in_check():
@@ -97,7 +131,7 @@ def highlight_legal_moves():
             )
             if engine.board[index] == ".":
                 pygame.draw.rect(screen, (0, 255, 0), Rect, 2)
-            else:
+            elif engine.board[index] != "." and engine.board[index] != "x":
                 pygame.draw.rect(screen, (255, 0, 0), Rect, 2)
 
 
@@ -110,10 +144,17 @@ while running:
         if event.type == pygame.MOUSEBUTTONDOWN:
             engine.start(event.pos, cell_size)
 
+    if undo_button.action():
+        engine.undo()
+    if redo_button.action():
+        engine.redo()
+
     draw_board()
     pygame.display.flip()
-    clock.tick(10)
+    clock.tick(20)
 
 pygame.quit()
 
 # TODO: add hower highlighting
+# TODO: add drag and drop
+# TODO: add selective promotion
