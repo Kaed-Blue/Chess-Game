@@ -15,6 +15,7 @@ class Engine:
         # fmt: on
         self.legal_moves = []
         self.history = []
+        self.move_id = -1
         self.first_selection = None
         self.second_selection = None
         self.is_white_turn = True
@@ -33,14 +34,15 @@ class Engine:
             + ((click_pos[1] // cell_size) * 2)  # index offset correction
             + 11
         )
-        return index
+        if 10 < index < 89:
+            return index
 
     def get_position_from_index(self, index):
         row = (index // 10) - 1
         col = (index % 10) - 1
         return row, col
 
-    def manage_turn(self, index, order):
+    def manage_turn(self, order, index=None):
         if order == "check_turn":
             piece_is_white = self.board[index].isupper()
             return piece_is_white == self.is_white_turn
@@ -49,8 +51,8 @@ class Engine:
             self.is_white_turn = not self.is_white_turn
 
     def get_selections(self, index):
-        if self.first_selection == None:
-            if self.manage_turn(index, "check_turn"):
+        if self.first_selection is None:
+            if self.manage_turn("check_turn", index):
                 if self.board[index] != ".":
                     self.first_selection = index
                     self.get_legal_moves(self.first_selection)
@@ -82,21 +84,31 @@ class Engine:
 
     def manage_game_state(self):
         self.make_promotion(self.second_selection)
-        self.manage_turn(None, "pass_turn")
+        self.manage_turn("pass_turn")
         self.in_check()
         self.manage_values("clear")
 
     def add_history(self, from_index, to_index):
+        self.move_id += 1
         piece_type = self.board[from_index]
-        taken = self.board[to_index] if self.board[to_index] != '.' else None
+        taken = self.board[to_index]
         last_move = (piece_type, from_index, to_index, taken)
         self.history.append(last_move)
         print(last_move)
 
+    def undo(self):
+        if 0 <= self.move_id < len(self.history):
+            piece_type, from_index, to_index, taken = self.history[self.move_id]
+            self.board[from_index] = self.board[to_index]
+            self.board[to_index] = taken
+            del self.history[-1]
+            self.move_id -= 1
+            self.manage_turn("pass_turn")
+
     def make_promotion(self, index, promote_to=None):
         rank = index // 10
-        white_piece = self.is_white(index)
         if self.board[index].lower() == "p" and rank in (1, 8):
+            white_piece = self.is_white(index)
             if promote_to is None:
                 self.board[index] = "Q" if white_piece else "q"
             else:
@@ -293,9 +305,10 @@ class Engine:
     
     def start(self, click_pos, cell_size):
         index = self.get_index_from_position(click_pos, cell_size)
-        self.get_selections(index)
-        if self.second_selection:
-            self.is_same_color(self.first_selection, self.second_selection)
-            self.move_pieces()
+        if index is not None:
+            self.get_selections(index)
+            if self.second_selection:
+                self.is_same_color(self.first_selection, self.second_selection)
+                self.move_pieces()
 
  # TODO: move history and undo
