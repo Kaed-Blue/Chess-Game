@@ -385,13 +385,14 @@ class Engine:
 
     def start(self, pos, cell_size):
         index = self.get_index_from_position(pos, cell_size)
-        self.get_selections(index)
-        if self.second_selection:
-            self.is_same_color(self.first_selection, self.second_selection)
-            self.move_pieces()
-            return self.get_fen_string()
-        else:
-            return False
+        if index:
+            self.get_selections(index)
+            if self.second_selection:
+                self.is_same_color(self.first_selection, self.second_selection)
+                self.move_pieces()
+            # return self.get_fen_string()
+        # else:
+        # return False
 
 
 #   TODO: add checkmate
