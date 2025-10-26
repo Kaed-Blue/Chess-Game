@@ -1,3 +1,28 @@
+def compatibility_translator(order, pos=None, index=None):
+    col_dict = {
+        "a": 1, "b": 2, "c": 3, "d": 4, "e": 5, "f": 6, "g": 7, "h": 8,  # fmt: skip
+    }
+    row_dict = {
+        "1": 8, "2": 7, "3": 6, "4": 5, "5": 4, "6": 3, "7": 2, "8": 1,  # fmt: skip
+    }
+    if order == "index_from_pos":
+        col = col_dict[pos[0]]
+        row = row_dict[pos[1]]
+        return (row * 10) + col
+
+    if order == "pos_from_index":
+        row = index // 10
+        col = index % 10
+        for key, value in col_dict.items():
+            if value == col:
+                col = key
+        for key, value in row_dict.items():
+            if value == row:
+                row = key
+        return str(col) + str(row)
+    return None
+
+
 class Engine:
     def __init__(self):
         # fmt: off
@@ -15,6 +40,7 @@ class Engine:
         # fmt: on
         self.legal_moves = []
         self.history = []
+        self.just_moved = False
         self.move_id = -1
         self.first_selection = None
         self.second_selection = None
@@ -49,8 +75,10 @@ class Engine:
 
         if order == "pass_turn":
             self.is_white_turn = not self.is_white_turn
+        return None
 
     def get_selections(self, index):
+        self.just_moved = False
         if self.first_selection is None:
             if self.manage_turn("check_turn", index):
                 if self.board[index] != ".":
@@ -81,11 +109,14 @@ class Engine:
             self.board[self.second_selection] = self.board[self.first_selection]
             self.board[self.first_selection] = "."
             self.manage_game_state()
+        else:
+            self.legal_moves = []
 
     def manage_game_state(self):
         self.make_promotion(self.second_selection)
         self.manage_turn("pass_turn")
         self.in_check()
+        self.just_moved = True
         self.manage_values("clear")
 
     def add_history(self, from_index, to_index):
@@ -96,7 +127,7 @@ class Engine:
         self.history.append(last_move)
         print(last_move)
 
-    def undo(self):
+    def undo(self):  # TODO: fix undo to consider promotions
         if 0 <= self.move_id < len(self.history):
             piece_type, from_index, to_index, taken = self.history[self.move_id]
             self.board[from_index] = self.board[to_index]
@@ -112,8 +143,9 @@ class Engine:
             if promote_to is None:
                 self.board[index] = "Q" if white_piece else "q"
             else:
-                self.board[index] = promote_to.upper() if white_piece else promote_to.lower()
-            
+                self.board[index] = (
+                    promote_to.upper() if white_piece else promote_to.lower()
+                )
 
     def track_king_pos(self, first_selection, second_selection):
         if self.board[first_selection].lower() == "k":
@@ -133,15 +165,16 @@ class Engine:
 
     def under_attack(self, index):
         if self.is_white_turn:
-            row = -(self.one_row)
+            row = -self.one_row
         else:
             row = self.one_row
 
         piece_movements = {  # TODO: add king
             "rook": [row, -row, 1, -1],
             "bishop": [row + 1, -row - 1, row - 1, -row + 1],
-            "knight": [(2 * row) + 1, (2 * row) - 1, row + 2, row - 2, -row + 2, -row - 2, (2 * -row) + 1, (2 * -row) - 1,], # fmt: skip
-            "king": [row, -row, 1, -1, row + 1, -row -1, row - 1, -row + 1]
+            "knight": [(2 * row) + 1, (2 * row) - 1, row + 2, row - 2, -row + 2, -row - 2, (2 * -row) + 1,
+                       (2 * -row) - 1, ],  # fmt: skip
+            "king": [row, -row, 1, -1, row + 1, -row - 1, row - 1, -row + 1],
         }
 
         for move in piece_movements["rook"]:
@@ -173,7 +206,7 @@ class Engine:
                     and self.board[index + move].isupper() != self.is_white_turn
                 ):
                     return True
-                
+
         # for move in piece_movements["king"]:
         #     if self.board
 
@@ -195,20 +228,20 @@ class Engine:
             self.second_selection = None
             self.legal_moves = []
 
-
-    def get_psudo_legal_moves(self, index):
-        psudo_legal_moves = []
+    def get_pseudo_legal_moves(self, index):
+        pseudo_legal_moves = []
         row = self.one_row
         piece_movements = {
             "rook": [row, -row, 1, -1],
             "bishop": [row + 1, -row - 1, row - 1, -row + 1],
             "queen_king": [row, -row, 1, -1, row + 1, -row - 1, row - 1, -row + 1],
-            "knight": [(2 * row) + 1, (2 * row) - 1, row + 2, row - 2, -row + 2, -row - 2, (2 * -row) + 1, (2 * -row) - 1,], # fmt: skip
+            "knight": [(2 * row) + 1, (2 * row) - 1, row + 2, row - 2, -row + 2, -row - 2, (2 * -row) + 1,
+                       (2 * -row) - 1, ],  # fmt: skip
         }
 
         if self.board[index].lower() == "p":
             if self.board[index] == "P":
-                move = -(row)
+                move = -row
                 diag_move = [-(row + 1), -(row - 1)]
             else:
                 move = row
@@ -216,16 +249,16 @@ class Engine:
 
             rank = index // 10
             if self.board[index + move] == ".":
-                psudo_legal_moves.append(index + move)
+                pseudo_legal_moves.append(index + move)
                 if rank == 7 or rank == 2:
                     if self.board[index + (2 * move)] == ".":
-                        psudo_legal_moves.append(index + (2 * move))
+                        pseudo_legal_moves.append(index + (2 * move))
 
             for move in diag_move:
                 if self.board[index + move] != "." and not self.is_same_color(
                     index, index + move
                 ):
-                    psudo_legal_moves.append(index + move)
+                    pseudo_legal_moves.append(index + move)
 
         elif self.board[index] == "n" or self.board[index] == "N":
             for move in piece_movements["knight"]:
@@ -233,7 +266,7 @@ class Engine:
                     if self.board[index + move] != "x" and not self.is_same_color(
                         index, index + move
                     ):
-                        psudo_legal_moves.append(index + move)
+                        pseudo_legal_moves.append(index + move)
 
         elif self.board[index].lower() == "r":
             for move in piece_movements["rook"]:
@@ -241,7 +274,7 @@ class Engine:
                 while self.board[index + move] != "x" and not self.is_same_color(
                     index, index + move
                 ):
-                    psudo_legal_moves.append(index + move)
+                    pseudo_legal_moves.append(index + move)
                     if self.board[index + move] != "." and not self.is_same_color(
                         index, index + move
                     ):
@@ -255,7 +288,7 @@ class Engine:
                 while self.board[index + move] != "x" and not self.is_same_color(
                     index, index + move
                 ):
-                    psudo_legal_moves.append(index + move)
+                    pseudo_legal_moves.append(index + move)
                     if self.board[index + move] != "." and not self.is_same_color(
                         index, index + move
                     ):
@@ -269,7 +302,7 @@ class Engine:
                 while self.board[index + move] != "x" and not self.is_same_color(
                     index, index + move
                 ):
-                    psudo_legal_moves.append(index + move)
+                    pseudo_legal_moves.append(index + move)
                     if self.board[index + move] != "." and not self.is_same_color(
                         index, index + move
                     ):
@@ -283,16 +316,16 @@ class Engine:
                     if self.board[index + move] != "x" and not self.is_same_color(
                         index, index + move
                     ):
-                        psudo_legal_moves.append(index + move)
-        return psudo_legal_moves
+                        pseudo_legal_moves.append(index + move)
+        return pseudo_legal_moves
 
     def get_legal_moves(self, index):
-        psudo_legal_moves = self.get_psudo_legal_moves(index)
-        for move in psudo_legal_moves:
-            if not self.check_in_psudoboard(index, move):
+        pseudo_legal_moves = self.get_pseudo_legal_moves(index)
+        for move in pseudo_legal_moves:
+            if not self.check_in_pseudoboard(index, move):
                 self.legal_moves.append(move)
 
-    def check_in_psudoboard(self, origin, destination):
+    def check_in_pseudoboard(self, origin, destination):
         temp = self.board[destination]
         self.track_king_pos(origin, destination)
         self.board[destination] = self.board[origin]
@@ -302,13 +335,41 @@ class Engine:
         self.board[origin] = self.board[destination]
         self.board[destination] = temp
         return flag
-    
-    def start(self, click_pos, cell_size):
-        index = self.get_index_from_position(click_pos, cell_size)
-        if index is not None:
-            self.get_selections(index)
-            if self.second_selection:
-                self.is_same_color(self.first_selection, self.second_selection)
-                self.move_pieces()
 
- # TODO: move history and undo
+    def get_fen_string(self):
+        fen = ""
+        i = 0
+        index = 0
+        for row in range(1, 10):
+            if i > 0:
+                fen += str(i)
+                i = 0
+            fen += "/"
+
+            for col in range(1, 11):
+                if self.board[index] != "x":
+                    piece = self.board[index]
+                    if piece != ".":
+                        if i > 0:
+                            fen += str(i)
+                            i = 0
+                            fen += piece
+                        else:
+                            fen += piece
+                    else:
+                        i += 1
+                index += 1
+        return fen[2:]
+
+    def start(self, pos, cell_size):
+        index = self.get_index_from_position(pos, cell_size)
+        self.get_selections(index)
+        if self.second_selection:
+            self.is_same_color(self.first_selection, self.second_selection)
+            self.move_pieces()
+            return self.get_fen_string()
+        else:
+            return False
+
+
+#  TODO: add checkmate

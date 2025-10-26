@@ -73,8 +73,8 @@ class Button:
         return False
 
 
-undo_button = Button(20, 750, images["undo_button"], 0.65)
-redo_button = Button(100, 750, images["redo_button"], 0.65)
+undo_button = Button(20, 758, images["undo_button"], 0.50)
+# redo_button = Button(100, 750, images["redo_button"], 0.65)
 
 def draw_board():
     screen.fill((133, 94, 66))
@@ -87,11 +87,11 @@ def draw_board():
             if alter:
                 pygame.draw.rect(
                     screen, (100, 70, 40), Rect, 0
-                )  # (100, 70, 40), (140, 90, 60)
+                )  # (100, 70, 40), (140, 90, 60), (232, 196, 149)
             else:
                 pygame.draw.rect(
                     screen, (181, 136, 99), Rect, 0
-                )  # (181, 136, 99), (70, 40, 20)
+                )  # (181, 136, 99), (70, 40, 20), (174, 125, 61)
             alter = not alter
 
             pygame.draw.rect(screen, (0, 0, 0), Rect, 1)
@@ -103,7 +103,7 @@ def draw_board():
     highlight_legal_moves()
     highlight_in_check()
     undo_button.draw_button()
-    redo_button.draw_button()
+    # redo_button.draw_button()
 
 
 def highlight_in_check():
@@ -146,8 +146,6 @@ while running:
 
     if undo_button.action():
         engine.undo()
-    if redo_button.action():
-        engine.redo()
 
     draw_board()
     pygame.display.flip()
