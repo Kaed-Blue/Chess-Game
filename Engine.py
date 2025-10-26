@@ -38,16 +38,17 @@ class Engine:
         "x","R","N","B","Q","K","B","N","R","x",
         "x","x","x","x","x","x","x","x","x","x",]
         # fmt: on
-        self.legal_moves = []
-        self.history = []
-        self.just_moved = False
-        self.move_id = -1
         self.first_selection = None
         self.second_selection = None
+        self.king_in_check_index = None
+        self.en_passant_able = None
+        self.legal_moves = []
+        self.history = []
+        self.move_id = -1
+        self.just_moved = False
         self.is_white_turn = True
         self.king_pos = {"white_king": 85, "black_king": 15}
         self.one_row = int(len(self.board) ** (1 / 2))
-        self.king_in_check_index = None
 
     def get_piece(self, index):  # TODO: refactor
         while self.board[index] == "x":
@@ -104,15 +105,19 @@ class Engine:
 
     def move_pieces(self):
         if self.second_selection in self.legal_moves:
-            self.track_king_pos(self.first_selection, self.second_selection)
-            self.add_history(self.first_selection, self.second_selection)
+            self.pre_move_updates()
             self.board[self.second_selection] = self.board[self.first_selection]
             self.board[self.first_selection] = "."
-            self.manage_game_state()
+            self.post_move_updates()
         else:
             self.legal_moves = []
 
-    def manage_game_state(self):
+    def pre_move_updates(self):
+        self.track_king_pos(self.first_selection, self.second_selection)
+        self.add_history(self.first_selection, self.second_selection)
+        self.is_enpassant_able(self.first_selection, self.second_selection)
+
+    def post_move_updates(self):
         self.make_promotion(self.second_selection)
         self.manage_turn("pass_turn")
         self.in_check()
@@ -147,6 +152,14 @@ class Engine:
                     promote_to.upper() if white_piece else promote_to.lower()
                 )
 
+    def is_enpassant_able(self, origin, destination):
+        self.en_passant_able = None
+        if self.board[origin].lower() == "p":
+            if (origin // 10) == 7 or (origin // 10) == 2:
+                if (destination // 10) == 5 or (destination // 10) == 4:
+                    self.en_passant_able = destination
+                    print(self.en_passant_able)
+
     def track_king_pos(self, first_selection, second_selection):
         if self.board[first_selection].lower() == "k":
             if self.is_white_turn:
@@ -156,7 +169,7 @@ class Engine:
 
     def get_king_inturn_pos(self):
         king_key = "white_king" if self.is_white_turn else "black_king"
-        return self.king_pos[king_key]        
+        return self.king_pos[king_key]
 
     def in_check(self):
         king_pos = self.get_king_inturn_pos()
@@ -320,8 +333,10 @@ class Engine:
             for move in piece_movements["queen_king"]:
                 if index + move < len(self.board):
 
-                    if (self.board[index + move] != "x" and not self.is_same_color(
-                        index, index + move) and not self.under_attack(index + move)
+                    if (
+                        self.board[index + move] != "x"
+                        and not self.is_same_color(index, index + move)
+                        and not self.under_attack(index + move)
                     ):
                         self.legal_moves.append(index + move)
         return pseudo_legal_moves
@@ -379,4 +394,6 @@ class Engine:
             return False
 
 
-#  TODO: add checkmate
+#   TODO: add checkmate
+#   TODO: add en passant
+#   TODO: add castling
