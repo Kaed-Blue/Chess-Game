@@ -154,9 +154,12 @@ class Engine:
             else:
                 self.king_pos["black_king"] = second_selection
 
-    def in_check(self):
+    def get_king_inturn_pos(self):
         king_key = "white_king" if self.is_white_turn else "black_king"
-        king_pos = self.king_pos[king_key]
+        return self.king_pos[king_key]        
+
+    def in_check(self):
+        king_pos = self.get_king_inturn_pos()
         if self.under_attack(king_pos):
             self.king_in_check_index = king_pos
             return True
@@ -169,7 +172,7 @@ class Engine:
         else:
             row = self.one_row
 
-        piece_movements = {  # TODO: add king
+        piece_movements = {
             "rook": [row, -row, 1, -1],
             "bishop": [row + 1, -row - 1, row - 1, -row + 1],
             "knight": [(2 * row) + 1, (2 * row) - 1, row + 2, row - 2, -row + 2, -row - 2, (2 * -row) + 1,
@@ -207,8 +210,11 @@ class Engine:
                 ):
                     return True
 
-        # for move in piece_movements["king"]:
-        #     if self.board
+        for move in piece_movements["king"]:
+            king_pos = self.get_king_inturn_pos()
+            if index + move != king_pos:
+                if self.board[index + move].lower() == "k":
+                    return True
 
         for move in [index + row + 1, index + row - 1]:
             if (
@@ -313,10 +319,11 @@ class Engine:
         elif self.board[index].lower() == "k":
             for move in piece_movements["queen_king"]:
                 if index + move < len(self.board):
-                    if self.board[index + move] != "x" and not self.is_same_color(
-                        index, index + move
+
+                    if (self.board[index + move] != "x" and not self.is_same_color(
+                        index, index + move) and not self.under_attack(index + move)
                     ):
-                        pseudo_legal_moves.append(index + move)
+                        self.legal_moves.append(index + move)
         return pseudo_legal_moves
 
     def get_legal_moves(self, index):
