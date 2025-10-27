@@ -115,7 +115,7 @@ class Engine:
     def pre_move_updates(self):
         self.track_king_pos(self.first_selection, self.second_selection)
         self.add_history(self.first_selection, self.second_selection)
-        self.is_enpassant_able(self.first_selection, self.second_selection)
+        self.manage_enpassant(self.first_selection, self.second_selection)
 
     def post_move_updates(self):
         self.make_promotion(self.second_selection)
@@ -152,13 +152,22 @@ class Engine:
                     promote_to.upper() if white_piece else promote_to.lower()
                 )
 
-    def is_enpassant_able(self, origin, destination):
+    def manage_enpassant(self, origin, destination):
+        piece = self.board[origin].lower()
+
+        #   handle deletion of en passanted pawns
+        if piece == "p" and self.en_passant_able:
+            if abs(origin - self.en_passant_able) == 1:
+                if abs(destination - self.en_passant_able) == self.one_row:
+                    self.board[self.en_passant_able] = "."
+
+        #   index en passant-able pawns
         self.en_passant_able = None
-        if self.board[origin].lower() == "p":
-            if (origin // 10) == 7 or (origin // 10) == 2:
-                if (destination // 10) == 5 or (destination // 10) == 4:
-                    self.en_passant_able = destination
-                    print(self.en_passant_able)
+        if piece == "p":
+            origin_rank = origin // 10
+            dest_rank = destination // 10
+            if abs(origin_rank - dest_rank) == 2:
+                self.en_passant_able = destination
 
     def track_king_pos(self, first_selection, second_selection):
         if self.board[first_selection].lower() == "k":
@@ -261,10 +270,10 @@ class Engine:
         if self.board[index].lower() == "p":
             if self.board[index] == "P":
                 move = -row
-                diag_move = [-(row + 1), -(row - 1)]
+                diag_moves = [-(row + 1), -(row - 1)]
             else:
                 move = row
-                diag_move = [row + 1, row - 1]
+                diag_moves = [row + 1, row - 1]
 
             rank = index // 10
             if self.board[index + move] == ".":
@@ -273,11 +282,13 @@ class Engine:
                     if self.board[index + (2 * move)] == ".":
                         pseudo_legal_moves.append(index + (2 * move))
 
-            for move in diag_move:
-                if self.board[index + move] != "." and not self.is_same_color(
-                    index, index + move
-                ):
-                    pseudo_legal_moves.append(index + move)
+            for d_move in diag_moves:
+                if (
+                    self.board[index + d_move] != "."
+                    and not self.is_same_color(index, index + d_move)
+                ) or (index + d_move - move == self.en_passant_able):
+
+                    pseudo_legal_moves.append(index + d_move)
 
         elif self.board[index] == "n" or self.board[index] == "N":
             for move in piece_movements["knight"]:
@@ -390,11 +401,7 @@ class Engine:
             if self.second_selection:
                 self.is_same_color(self.first_selection, self.second_selection)
                 self.move_pieces()
-            # return self.get_fen_string()
-        # else:
-        # return False
 
 
 #   TODO: add checkmate
-#   TODO: add en passant
 #   TODO: add castling
