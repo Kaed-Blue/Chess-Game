@@ -114,8 +114,8 @@ class Engine:
 
     def pre_move_updates(self):
         self.track_king_pos(self.first_selection, self.second_selection)
-        self.add_history(self.first_selection, self.second_selection)
-        self.manage_enpassant(self.first_selection, self.second_selection)
+        enpassant = self.manage_enpassant(self.first_selection, self.second_selection)
+        self.add_history(self.first_selection, self.second_selection, enpassant)
 
     def post_move_updates(self):
         self.make_promotion(self.second_selection)
@@ -124,10 +124,10 @@ class Engine:
         self.just_moved = True
         self.manage_values("clear")
 
-    def add_history(self, from_index, to_index):
+    def add_history(self, from_index, to_index, enpassant):
         self.move_id += 1
         piece_type = self.board[from_index]
-        taken = self.board[to_index]
+        taken = self.board[to_index] if not enpassant else enpassant
         last_move = (piece_type, from_index, to_index, taken)
         self.history.append(last_move)
         print(last_move)
@@ -135,8 +135,14 @@ class Engine:
     def undo(self):  # TODO: fix undo to consider promotions
         if 0 <= self.move_id < len(self.history):
             piece_type, from_index, to_index, taken = self.history[self.move_id]
+            
             self.board[from_index] = self.board[to_index]
-            self.board[to_index] = taken
+            if type(taken) is not tuple:
+                self.board[to_index] = taken
+            else:
+                self.board[to_index] = "."
+                self.board[taken[1]] = taken[0]
+
             del self.history[-1]
             self.move_id -= 1
             self.manage_turn("pass_turn")
@@ -159,7 +165,9 @@ class Engine:
         if piece == "p" and self.en_passant_able:
             if abs(origin - self.en_passant_able) == 1:
                 if abs(destination - self.en_passant_able) == self.one_row:
+                    taken = self.board[self.en_passant_able]
                     self.board[self.en_passant_able] = "."
+                    return (taken, self.en_passant_able)
 
         #   index en passant-able pawns
         self.en_passant_able = None
@@ -405,3 +413,4 @@ class Engine:
 
 #   TODO: add checkmate
 #   TODO: add castling
+#   TODO: fix history to save enpassants, promotions and castling
