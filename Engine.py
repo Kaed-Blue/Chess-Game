@@ -55,7 +55,8 @@ class Engine:
             index += 1
         return self.board[index], index
 
-    def get_index_from_position(self, click_pos, cell_size):
+    @staticmethod
+    def get_index_from_position(click_pos, cell_size):
         index = (
             (((click_pos[1] // cell_size) * 8) + (click_pos[0] // cell_size))
             + ((click_pos[1] // cell_size) * 2)  # index offset correction
@@ -63,8 +64,10 @@ class Engine:
         )
         if 10 < index < 89:
             return index
+        return None
 
-    def get_position_from_index(self, index):
+    @staticmethod
+    def get_position_from_index(index):
         row = (index // 10) - 1
         col = (index % 10) - 1
         return row, col
@@ -113,10 +116,10 @@ class Engine:
             self.legal_moves = []
 
     def pre_move_updates(self):
-        self.track_king_pos(self.first_selection, self.second_selection)
-        self.castle(self.first_selection, self.second_selection)
+        self.update_king_pos(self.first_selection, self.second_selection)
+        castle = self.castle(self.first_selection, self.second_selection)
         enpassant = self.manage_enpassant(self.first_selection, self.second_selection)
-        self.add_history(self.first_selection, self.second_selection, enpassant)
+        self.add_history(self.first_selection, self.second_selection, enpassant, castle)
 
     def post_move_updates(self):
         self.make_promotion(self.second_selection)
@@ -125,28 +128,37 @@ class Engine:
         self.just_moved = True
         self.manage_values("clear")
 
-    def add_history(self, from_index, to_index, enpassant):
+    def add_history(self, from_index, to_index, castle=None, enpassant=None):
         self.move_id += 1
         piece_type = self.board[from_index]
-        taken = self.board[to_index] if not enpassant else enpassant
+        special_case = castle or enpassant
+        taken = self.board[to_index] if not special_case else special_case
         last_move = (piece_type, from_index, to_index, taken)
         self.history.append(last_move)
         print(last_move)
 
     def undo(self):
         if 0 <= self.move_id < len(self.history):
+            self.manage_turn("pass_turn")
             piece_type, from_index, to_index, taken = self.history[self.move_id]
+            self.update_king_pos(to_index, from_index)
 
             self.board[from_index] = self.board[to_index]
-            if type(taken) is not tuple:  # check if it's not en passant
-                self.board[to_index] = taken
+            if type(taken) is tuple:  # check if it's not special_case
+                if taken[0] == "enpassant":
+                    self.board[to_index] = "."
+                    self.board[taken[2]] = taken[1]
+
+                elif taken[0] == "castle":
+                    rook = self.board[taken[2]]
+                    self.board[taken[1]] = rook
+                    self.board[taken[2]] = "."
+                    self.board[to_index] = "."
             else:
-                self.board[to_index] = "."
-                self.board[taken[1]] = taken[0]
+                self.board[to_index] = taken
 
             del self.history[-1]
             self.move_id -= 1
-            self.manage_turn("pass_turn")
 
     def make_promotion(self, index, promote_to=None):
         rank = index // 10
@@ -162,13 +174,13 @@ class Engine:
     def manage_enpassant(self, origin, destination):
         piece = self.board[origin].lower()
 
-        #   handle deletion of en passanted pawns
+        #   handle deletion of en passant-ed pawns
         if piece == "p" and self.en_passant_able:
             if abs(origin - self.en_passant_able) == 1:
                 if abs(destination - self.en_passant_able) == self.one_row:
                     taken = self.board[self.en_passant_able]
                     self.board[self.en_passant_able] = "."
-                    return (taken, self.en_passant_able)
+                    return "enpassant", taken, self.en_passant_able
 
         #   index en passant-able pawns
         self.en_passant_able = None
@@ -177,6 +189,7 @@ class Engine:
             dest_rank = destination // 10
             if abs(origin_rank - dest_rank) == 2:
                 self.en_passant_able = destination
+        return None
 
     def legal_castles(self):
         if self.king_in_check_index:
@@ -228,17 +241,23 @@ class Engine:
         if self.board[from_index].lower() == "k":
             if abs(from_index - to_index) == 2:
 
-                closest_rook = min((11, 18, 81, 88), key=lambda i: abs(to_index - i))
-                print(closest_rook)
+                closest_rook_sqr = min(
+                    (11, 18, 81, 88), key=lambda i: abs(to_index - i)
+                )
 
-                rook = self.board[closest_rook]
-                self.board[closest_rook] = "."
-                if from_index > closest_rook:
-                    self.board[to_index + 1] = rook
+                rook = self.board[closest_rook_sqr]
+                self.board[closest_rook_sqr] = "."
+
+                if from_index > closest_rook_sqr:
+                    rook_target = to_index + 1
                 else:
-                    self.board[to_index - 1] = rook
+                    rook_target = to_index - 1
 
-    def track_king_pos(self, first_selection, second_selection):
+                self.board[rook_target] = rook
+                return "castle", closest_rook_sqr, rook_target
+        return None
+
+    def update_king_pos(self, first_selection, second_selection):
         if self.board[first_selection].lower() == "k":
             if self.is_white_turn:
                 self.king_pos["white_king"] = second_selection
@@ -420,7 +439,7 @@ class Engine:
                     ):
                         self.legal_moves.append(
                             index + move
-                        )  # no need to check in pseudoboard
+                        )  # no need to check in pseudo-board
 
             castle_indices = self.legal_castles()
             if castle_indices:
@@ -432,16 +451,16 @@ class Engine:
     def get_legal_moves(self, index):
         pseudo_legal_moves = self.get_pseudo_legal_moves(index)
         for move in pseudo_legal_moves:
-            if not self.check_in_pseudoboard(index, move):
+            if not self.check_in_pseudo_board(index, move):
                 self.legal_moves.append(move)
 
-    def check_in_pseudoboard(self, origin, destination):
+    def check_in_pseudo_board(self, origin, destination):
         temp = self.board[destination]
-        self.track_king_pos(origin, destination)
+        self.update_king_pos(origin, destination)
         self.board[destination] = self.board[origin]
         self.board[origin] = "."
         flag = self.in_check()
-        self.track_king_pos(destination, origin)
+        self.update_king_pos(destination, origin)
         self.board[origin] = self.board[destination]
         self.board[destination] = temp
         return flag
@@ -481,4 +500,4 @@ class Engine:
 
 
 #   TODO: add checkmate
-#   TODO: fix history to save promotions and castling
+#   TODO: fix history to save promotions
