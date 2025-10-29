@@ -114,6 +114,7 @@ class Engine:
 
     def pre_move_updates(self):
         self.track_king_pos(self.first_selection, self.second_selection)
+        self.castle(self.first_selection, self.second_selection)
         enpassant = self.manage_enpassant(self.first_selection, self.second_selection)
         self.add_history(self.first_selection, self.second_selection, enpassant)
 
@@ -132,12 +133,12 @@ class Engine:
         self.history.append(last_move)
         print(last_move)
 
-    def undo(self):  # TODO: fix undo to consider promotions
+    def undo(self):
         if 0 <= self.move_id < len(self.history):
             piece_type, from_index, to_index, taken = self.history[self.move_id]
-            
+
             self.board[from_index] = self.board[to_index]
-            if type(taken) is not tuple:
+            if type(taken) is not tuple:  # check if it's not en passant
                 self.board[to_index] = taken
             else:
                 self.board[to_index] = "."
@@ -177,6 +178,66 @@ class Engine:
             if abs(origin_rank - dest_rank) == 2:
                 self.en_passant_able = destination
 
+    def legal_castles(self):
+        if self.king_in_check_index:
+            return []
+
+        if self.is_white_turn:
+            rook, king, rook_indices = "R", "K", [88, 81]
+        else:
+            rook, king, rook_indices = "r", "k", [11, 18]
+
+        for record in self.history:  #   check if king or rooks have moved
+            if record[0] == king:
+                return False
+            if record[0] == rook:
+                if record[1] in rook_indices:
+                    rook_indices.remove(record[1])
+
+        if not rook_indices:
+            return []
+
+        king_index = self.get_king_inturn_index()
+        castle_squares = []
+
+        def no_pieces_in_way():
+            for i in range(lesser + 1, greater):
+                if self.board[i] != ".":
+                    return False
+            return True
+
+        def path_not_under_attack():
+            for i in range(lesser + 1, greater):
+                if self.under_attack(i):
+                    return False
+            return True
+
+        for rook_index in rook_indices:
+
+            if king_index > rook_index:
+                greater, lesser, offset = king_index, rook_index, -2
+            else:
+                greater, lesser, offset = rook_index, king_index, +2
+
+            if no_pieces_in_way() and path_not_under_attack():
+                castle_squares.append(king_index + offset)
+
+        return castle_squares
+
+    def castle(self, from_index, to_index):
+        if self.board[from_index].lower() == "k":
+            if abs(from_index - to_index) == 2:
+
+                closest_rook = min((11, 18, 81, 88), key=lambda i: abs(to_index - i))
+                print(closest_rook)
+
+                rook = self.board[closest_rook]
+                self.board[closest_rook] = "."
+                if from_index > closest_rook:
+                    self.board[to_index + 1] = rook
+                else:
+                    self.board[to_index - 1] = rook
+
     def track_king_pos(self, first_selection, second_selection):
         if self.board[first_selection].lower() == "k":
             if self.is_white_turn:
@@ -184,12 +245,12 @@ class Engine:
             else:
                 self.king_pos["black_king"] = second_selection
 
-    def get_king_inturn_pos(self):
+    def get_king_inturn_index(self):
         king_key = "white_king" if self.is_white_turn else "black_king"
         return self.king_pos[king_key]
 
     def in_check(self):
-        king_pos = self.get_king_inturn_pos()
+        king_pos = self.get_king_inturn_index()
         if self.under_attack(king_pos):
             self.king_in_check_index = king_pos
             return True
@@ -241,7 +302,7 @@ class Engine:
                     return True
 
         for move in piece_movements["king"]:
-            king_pos = self.get_king_inturn_pos()
+            king_pos = self.get_king_inturn_index()
             if index + move != king_pos:
                 if self.board[index + move].lower() == "k":
                     return True
@@ -357,7 +418,15 @@ class Engine:
                         and not self.is_same_color(index, index + move)
                         and not self.under_attack(index + move)
                     ):
-                        self.legal_moves.append(index + move)
+                        self.legal_moves.append(
+                            index + move
+                        )  # no need to check in pseudoboard
+
+            castle_indices = self.legal_castles()
+            if castle_indices:
+                for i in castle_indices:
+                    self.legal_moves.append(i)
+
         return pseudo_legal_moves
 
     def get_legal_moves(self, index):
@@ -377,7 +446,7 @@ class Engine:
         self.board[destination] = temp
         return flag
 
-    def get_fen_string(self):
+    def generate_fen_string(self):
         fen = ""
         i = 0
         index = 0
@@ -412,5 +481,4 @@ class Engine:
 
 
 #   TODO: add checkmate
-#   TODO: add castling
-#   TODO: fix history to save enpassants, promotions and castling
+#   TODO: fix history to save promotions and castling
