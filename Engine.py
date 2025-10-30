@@ -117,21 +117,23 @@ class Engine:
 
     def pre_move_updates(self):
         self.update_king_pos(self.first_selection, self.second_selection)
+
         castle = self.castle(self.first_selection, self.second_selection)
         enpassant = self.manage_enpassant(self.first_selection, self.second_selection)
-        self.add_history(self.first_selection, self.second_selection, enpassant, castle)
+        promotion = self.make_promotion(self.first_selection, self.second_selection)
+
+        special_case = castle or enpassant or promotion
+        self.add_history(self.first_selection, self.second_selection, special_case)
 
     def post_move_updates(self):
-        self.make_promotion(self.second_selection)
         self.manage_turn("pass_turn")
         self.in_check()
         self.just_moved = True
         self.manage_values("clear")
 
-    def add_history(self, from_index, to_index, castle=None, enpassant=None):
+    def add_history(self, from_index, to_index, special_case=None):
         self.move_id += 1
         piece_type = self.board[from_index]
-        special_case = castle or enpassant
         taken = self.board[to_index] if not special_case else special_case
         last_move = (piece_type, from_index, to_index, taken)
         self.history.append(last_move)
@@ -154,22 +156,29 @@ class Engine:
                     self.board[taken[1]] = rook
                     self.board[taken[2]] = "."
                     self.board[to_index] = "."
+
+                elif taken[0] == "promotion":
+                    self.board[from_index] = taken[1]
+                    self.board[to_index] = taken[2]
             else:
                 self.board[to_index] = taken
 
             del self.history[-1]
             self.move_id -= 1
 
-    def make_promotion(self, index, promote_to=None):
-        rank = index // 10
-        if self.board[index].lower() == "p" and rank in (1, 8):
-            white_piece = self.is_white(index)
+    def make_promotion(self, from_index, to_index, promote_to=None):
+        rank = to_index // 10
+        if self.board[from_index].lower() == "p" and rank in (1, 8):
+            white_piece = self.is_white(from_index)
+            piece = self.board[from_index]  # used for undo
             if promote_to is None:
-                self.board[index] = "Q" if white_piece else "q"
+                self.board[from_index] = "Q" if white_piece else "q"
             else:
-                self.board[index] = (
+                self.board[from_index] = (
                     promote_to.upper() if white_piece else promote_to.lower()
                 )
+            return "promotion", piece, self.board[to_index], self.board[from_index]
+        return None
 
     def manage_enpassant(self, origin, destination):
         piece = self.board[origin].lower()
@@ -500,4 +509,3 @@ class Engine:
 
 
 #   TODO: add checkmate
-#   TODO: fix history to save promotions
