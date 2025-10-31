@@ -42,6 +42,7 @@ class Engine:
         self.second_selection = None
         self.king_in_check_index = None
         self.en_passant_able = None
+        self.checkmate_flag = None
         self.legal_moves = []
         self.history = []
         self.move_id = -1
@@ -128,6 +129,8 @@ class Engine:
     def post_move_updates(self):
         self.manage_turn("pass_turn")
         self.in_check()
+        if self.checkmate():
+            print("checkmate")
         self.just_moved = True
         self.manage_values("clear")
 
@@ -283,6 +286,12 @@ class Engine:
             self.king_in_check_index = king_pos
             return True
         self.king_in_check_index = None
+        return False
+
+    def checkmate(self):
+        if self.king_in_check_index is not None:
+            if not self.get_all_legal_moves():
+                return True
         return False
 
     def under_attack(self, index):
@@ -462,6 +471,21 @@ class Engine:
         for move in pseudo_legal_moves:
             if not self.check_in_pseudo_board(index, move):
                 self.legal_moves.append(move)
+
+        return self.legal_moves
+
+    def get_all_legal_moves(self):
+        all_legal_moves = {}
+        for index in range(11, 88):
+            self.legal_moves = []
+            piece = self.board[index]
+            if piece != "x" and piece != "." and self.is_white_turn == piece.isupper():
+                at_index_legal_moves = self.get_legal_moves(index)
+                if at_index_legal_moves:
+                    all_legal_moves.update(
+                        {f"{piece} at {index}": at_index_legal_moves}
+                    )
+        return all_legal_moves
 
     def check_in_pseudo_board(self, origin, destination):
         temp = self.board[destination]
